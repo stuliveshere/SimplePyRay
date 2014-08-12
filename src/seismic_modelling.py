@@ -5,32 +5,11 @@
 import numpy as np
 import matplotlib.pyplot as pylab
 
-#signal processing 101.  we are going to process some seismic signals.
-#but first we are going to build the signal we are going to process.
-#I could supply seismic data, but there is advantages to building our 
-#own. specifically, we know what the answer should be.  What we will
-#be doing is known as scientific modelling. so what model are we going to build?
+
 
 #earth convolution model. oz yilmaz.
 
-#this is only one type of model.  Another type of model might be a finite difference 
-#model, which uses the partial differential wave equation to model seismic
-#waves propogating through a medium.
 
-#what is convolution? 
-#it is defined as the integral of the product of the two functions
-#after one is reversed and shifted
-#http://en.wikipedia.org/wiki/Convolution
-#succinct, exact, but not very clear
-#convolve is to roll together, so convolution in signal processing is 
-#rolling together 2 signals. often denoted by *
-
-#The convolutional model of the seismic trace states that 
-#the trace we record is the result of the earth's reflectivity 
-#(what we want) convolved with the source wavelet the 
-#recording system and some noise.
-
-#ie. E * S * R + N
 
 #we are going to build this model!
 

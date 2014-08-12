@@ -31,18 +31,7 @@ def find_points(x0, z0, x1, z1, nump, model):
 	zint = np.floor(z) #round em down
 	return model[xint.astype(np.int), zint.astype(np.int)] 
 	
-def build_wavelet(lowcut, highcut):
-	signal = np.zeros(200)
-	signal[100] = 1.0
-	fft = np.fft.fft(signal)
-	n = signal.size
-	timestep = 0.001
-	freq = np.fft.fftfreq(n, d=timestep)
-	filter = (lowcut < np.abs(freq)) & (np.abs(freq) < highcut)
-	filter = np.convolve(filter, np.ones(100, 'f')/100., mode='same')
-	fft *= filter
-	signal=np.fft.ifft(fft)
-	return signal.real
+
 
 	
 # survey geometry.
