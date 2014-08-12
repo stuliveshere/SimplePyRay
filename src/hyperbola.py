@@ -5,13 +5,9 @@
 
 import numpy as np
 import matplotlib.pyplot as pylab
-from build_model import seismic_model
+from toolbox import build_wavelet, build_model, agc_func, find_points
 import sys
 
-def agc_func(data, window):
-    vec = np.ones(window)/(window/2.)
-    func = np.apply_along_axis(lambda m: np.convolve(np.abs(m), vec, mode='same'), axis=1, arr=data)
-    return func
 
 def reflection_coefficient(z0, z1):
 	z = ((z1 - z0)**2)/(z1+z0)**2
@@ -21,15 +17,7 @@ def reflection_coefficient(z0, z1):
 def transmission_coefficient(z0, z1):
 	return (4*z0*z1)/((z1+z0)**2)
 
-def find_points(x0, z0, x1, z1, nump, model):
-	'''
-	nearest neighbour search
-	'''
-	x = np.linspace(x0, x1, nump, endpoint=False)
-	z = np.linspace(z0, z1, nump, endpoint=False) #generate rays
-	xint = np.floor(x) #round em down
-	zint = np.floor(z) #round em down
-	return model[xint.astype(np.int), zint.astype(np.int)] 
+
 	
 
 
@@ -41,7 +29,7 @@ rx_coords = np.arange(240)
 num=1000 #number of interpolation points
 
 
-model = seismic_model()
+model = build_model()
 
 nt = 1000
 dt = 0.001
@@ -86,9 +74,8 @@ for layer in [1, 2,3]: #not going to bother with base of weathering or bottom of
 			output[np.floor(rx), np.floor(traveltime/dt)] += amp
 
 
-
 #add noise
-noise = np.random.normal(0.0, 1e-8, size=(output.shape))
+noise = np.random.normal(0.0, 0.5e-7, size=(output.shape))
 output += noise
 
 #convolve wavelet
@@ -97,13 +84,13 @@ for rx in rx_coords:
 	output[rx,:] = np.convolve(output[rx,:], wavelet, mode='same')
 
 #agc for viewing
-agc = 1
-amp_func = agc_func(data=output,window=100)
+agc =1
+amp_func = agc_func(data=output,window=50)
 if agc:
 	output /= amp_func		
 	scale = 5.0
 else:
-	scale = np.mean(np.abs(output))*1e2
+	scale = np.mean(np.abs(output))*5e1
 	
 #view
 pylab.imshow(output[:,:200].T, aspect='auto', vmin=-1*scale, vmax=scale, cmap='RdGy')
