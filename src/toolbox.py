@@ -31,6 +31,7 @@ class build_model(dict):
 		super(build_model, self).__init__(*arg, **kw)
 		self['nlayers'] = 5
 		self['nx'] = 500
+		fault_throw = 5
 		
 		self['dz'] = np.array([10, 20, 10, 50, 100, ])
 		self['vp'] = np.array([800., 2200., 1800., 2400., 4500., ])
@@ -46,7 +47,8 @@ class build_model(dict):
 				layer *= self[model][index]
 				layer_list.append(layer)
 			self['model'][model] = np.hstack(layer_list)
-			
+			self['model'][model][250:500,30:40] = self[model][1]
+			self['model'][model][250:500,30+fault_throw:40+fault_throw] = self[model][2]
 	#def __repr__(self):
 		#return repr(self['model'])
 			
@@ -69,6 +71,7 @@ def find_points(x0, z0, x1, z1, nump, model):
 	'''
 	nearest neighbour search
 	'''
+	
 	x = np.linspace(x0, x1, nump, endpoint=False)
 	z = np.linspace(z0, z1, nump, endpoint=False) #generate rays
 	xint = np.floor(x) #round em down

@@ -31,8 +31,9 @@ num=1000 #number of interpolation points
 
 model = build_model()
 
-nt = 1000
+
 dt = 0.001
+nt = 1000
 nx = rx_coords.size
 output = np.zeros((nx, nt), 'f')
 
