@@ -82,15 +82,15 @@ def find_points(x0, z0, x1, z1, nump, model):
 	
 	x = np.linspace(x0, x1, nump, endpoint=False)
 	z = np.linspace(z0, z1, nump, endpoint=False) #generate rays
-	xint = np.floor(x) #round em down
-	zint = np.floor(z) #round em down
+	xint = np.ceil(x) #round em down
+	zint = np.ceil(z) #round em down
 	return model[xint.astype(np.int), zint.astype(np.int)] 
 
 def traveltime(x0, z0, x1, z1, model, nump, ds):
 	x = np.linspace(x0, x1, nump, endpoint=False)
 	z = np.linspace(z0, z1, nump, endpoint=False) #generate rays
-	xint = np.floor(x) #round em down
-	zint = np.floor(z) #round em down
+	xint = np.ceil(x) #round em down
+	zint = np.ceil(z) #round em down
 	vel_points = model[xint.astype(np.int), zint.astype(np.int)] 
 	return np.sum(ds/vel_points)
 	
