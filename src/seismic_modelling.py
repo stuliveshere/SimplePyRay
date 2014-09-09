@@ -31,6 +31,8 @@ def refract(x, v0, v1, z0):
 
 #build the pre-defined velocity model
 model = toolbox.build_model()
+sutype = su.typeSU(1000)
+holder = np.zeros(0, dtype=sutype)
 
 #build wavelet
 low = 2. #hz
@@ -48,181 +50,174 @@ rho = model['model']['rho']
 R = model['model']['R']
 
 #define survey geometry, ie shot and reciever points
-sx_coords = [120.0] #np.arange(99)+0.5
+sx_coords = np.arange(500.0)[::2] + 0.5
 rx_coords = np.arange(500.0)
 sz = 0
 gz = 0
 
-sx = sx_coords[0] #temporary1
+for sx in sx_coords:
+    #calculate some commonly used values
+    offsets = rx_coords - sx #vector distance from shot
+    aoffsets = np.abs(offsets) #absolute value
 
+    #define an output array
+    nx = 500 #number of samples in x direction (assume 1m cells)
+    ns = 1000 #number of samples in z direction (assume 1ms cells)
 
-#calculate some commonly used values
-offsets = rx_coords - sx_coords[0] #vector distance from shot
-aoffsets = np.abs(offsets) #absolute value
+    output = np.zeros((nx, ns), 'f') #holds the output
 
-#define an output array
-nx = 500 #number of samples in x direction (assume 1m cells)
-ns = 1000 #number of samples in z direction (assume 1ms cells)
+    #---------------------------------------------------------------------------------------
+    #calculate direct wave.  direct. assume speed of sound (330m/s)
+    #---------------------------------------------------------------------------------------
+    velocity = 330.0 #m/s
+    direct_times = aoffsets/velocity #seconds
 
-output = np.zeros((nx, ns), 'f') #holds the output
+    #now we need to calculate amplitudes. First, lets set all the amplitudes
+    # to 0.05 (picked by testing)
+    direct_amps = np.ones_like(rx_coords) * 0.05
+    #calculate the spherical divergence correction
+    direct_correction = diverge(aoffsets)
+    #apply correction
+    direct_amps *= direct_correction
 
-#---------------------------------------------------------------------------------------
-#calculate direct wave.  direct. assume speed of sound (330m/s)
-#---------------------------------------------------------------------------------------
-velocity = 330.0 #m/s
-direct_times = aoffsets/velocity #seconds
+    #we are not interested in anything after 1 second
+    limits = [direct_times < 1]
 
-#now we need to calculate amplitudes. First, lets set all the amplitudes
-# to 0.05 (picked by testing)
-direct_amps = np.ones_like(rx_coords) * 0.05
-#calculate the spherical divergence correction
-direct_correction = diverge(aoffsets)
-#apply correction
-direct_amps *= direct_correction
+    x = rx_coords[limits]
+    t = direct_times[limits]
+    direct_amps = direct_amps[limits]
 
-#we are not interested in anything after 1 second
-limits = [direct_times < 1]
+    #convert to coordinates
+    t *= 1000 # milliseconds
+    x = np.floor(x).astype(np.int)
+    t = np.floor(t).astype(np.int)
 
-x = rx_coords[limits]
-t = direct_times[limits]
-direct_amps = direct_amps[limits]
+    #write to output array
+    output[x, t] += direct_amps
 
-#convert to coordinates
-t *= 1000 # milliseconds
-x = np.floor(x).astype(np.int)
-t = np.floor(t).astype(np.int)
+    #check plot
+    #~ pylab.plot(x, t, '.')
 
-#write to output array
-output[x, t] += direct_amps
+    #------------------------------------------------------------------------------------
+    # calculate refraction
+    #------------------------------------------------------------------------------------
 
-#check plot
-pylab.plot(x, t, '.')
+    #calculate refraction times based upon function written earlier
+    refraction_times = refract(aoffsets, v0, v1, z0)
 
-#------------------------------------------------------------------------------------
-# calculate refraction
-#------------------------------------------------------------------------------------
-
-#calculate refraction times based upon function written earlier
-refraction_times = refract(aoffsets, v0, v1, z0)
-
-#create amplitude array
-refract_amps = np.ones_like(rx_coords) * 0.1
-#calculate the spherical divergence correction
-direct_correction = diverge(aoffsets)
-#apply correction
-refract_amps *= direct_correction
-
-
-
-#it probably wont exceed 1s, but to make it look right we 
-#need to limit it so that it doesnt cross over the direct
-limits = [refraction_times < direct_times]
-x = rx_coords[limits]
-t = refraction_times[limits]
-refract_amps = refract_amps[limits]
-
-#convert coordinates to integers
-x = np.floor(x).astype(np.int)
-t *= 1000 # milliseconds
-t = np.floor(t).astype(np.int)
-
-#write to output array
-output[x, t] += refract_amps
-
-#check plot
-pylab.plot(x, t, '.')
-
-
-pylab.ylim([1000,0])
+    #create amplitude array
+    refract_amps = np.ones_like(rx_coords) * 0.1
+    #calculate the spherical divergence correction
+    direct_correction = diverge(aoffsets)
+    #apply correction
+    refract_amps *= direct_correction
 
 
 
-#-----------------------------------------------------------------------------------------------
-# calculate reflection times and amplitudes
-#-----------------------------------------------------------------------------------------------
+    #it probably wont exceed 1s, but to make it look right we 
+    #need to limit it so that it doesnt cross over the direct
+    limits = [refraction_times < direct_times]
+    x = rx_coords[limits]
+    t = refraction_times[limits]
+    refract_amps = refract_amps[limits]
 
-numpoints = 100 #used for interpolating through the model
-for gx in rx_coords:
-    cmpx = np.floor((gx + sx)/2.).astype(np.int) # nearest midpoint
-    h = cmpx - sx #half offset
-    #the next line extracts the non-zero reflection points at this midpoint
-    #and iterates over them
-    for cmpz in (np.nonzero(R[cmpx,:])[0]):
-        ds = np.sqrt(cmpz**2 + (h)**2)/float(numpoints) # line step distance
-        #predefine outputs
-        amp = 1.0
-        time = 0.0
+    #convert coordinates to integers
+    x = np.floor(x).astype(np.int)
+    t *= 1000 # milliseconds
+    t = np.floor(t).astype(np.int)
 
-        #traveltime from source to cdp
-        vp_down = toolbox.find_points(sx, sz, cmpx, cmpz, numpoints, vp)
-        time += np.sum(ds/vp_down)
+    #write to output array
+    output[x, t] += refract_amps
 
-        #traveltime from cdp to geophone
-        vp_up = toolbox.find_points(cmpx, cmpz, gx, gz, numpoints, vp)
-        time += np.sum(ds/vp_up)
-
-        #loss due to spherical divergence
-        amp *= diverge(ds*numpoints*2)#two way
-        
+    #check plot
+    #~ pylab.plot(x, t, '.')
 
 
-        #~ #transmission losses from source to cdp
-        rho_down = toolbox.find_points(sx, sz, cmpx, cmpz, numpoints, rho)
-        z0 = rho_down * vp_down
-        z0 = np.pad(z0, 1, mode='reflect') #pad to get rid of edge effects
-        z1 = np.roll(z0, shift=1) #shift the values by 1
-        z0 = z0[1:-1] #slice off the padding
-        z1 = z1[1:-1]
-        correction = np.cumprod(transmission_coefficient(z0, z1))[-1] 
-        amp *= correction
-
-        #amplitude loss at reflection point
-        correction = R[cmpx,cmpz]
-        amp *= correction
-
-        #transmission loss from cdp to source
-        rho_up = toolbox.find_points(cmpx, cmpz, gx, gz, numpoints, rho)
-        z0 = rho_up * vp_up
-        z0 = np.pad(z0, 1, mode='reflect') #pad to get rid of edge effects
-        z1 = np.roll(z0, shift=-1)
-        z0 = z0[1:-1] #slice off the padding
-        z1 = z1[1:-1]
-        correction = np.cumprod(transmission_coefficient(z0, z1))[-1]
-        amp *= correction
-        
-        x = np.floor(gx).astype(np.int) 
-        t = np.floor(time*1000).astype(np.int)
-        output[x, t] += amp
-        pylab.plot(x, t, '.')
+    #~ pylab.ylim([1000,0])
 
 
-noise = np.random.normal(0.0, 1e-6, size=(output.shape))
-output += noise
 
-record = np.apply_along_axis(lambda m: np.convolve(m, wavelet, mode='same'), axis=1, arr=output)
+    #-----------------------------------------------------------------------------------------------
+    # calculate reflection times and amplitudes
+    #-----------------------------------------------------------------------------------------------
+
+    numpoints = 100 #used for interpolating through the model
+    for gx in rx_coords:
+        cmpx = np.floor((gx + sx)/2.).astype(np.int) # nearest midpoint
+        h = cmpx - sx #half offset
+        #the next line extracts the non-zero reflection points at this midpoint
+        #and iterates over them
+        for cmpz in (np.nonzero(R[cmpx,:])[0]):
+            ds = np.sqrt(cmpz**2 + (h)**2)/float(numpoints) # line step distance
+            #predefine outputs
+            amp = 1.0
+            time = 0.0
+
+            #traveltime from source to cdp
+            vp_down = toolbox.find_points(sx, sz, cmpx, cmpz, numpoints, vp)
+            time += np.sum(ds/vp_down)
+
+            #traveltime from cdp to geophone
+            vp_up = toolbox.find_points(cmpx, cmpz, gx, gz, numpoints, vp)
+            time += np.sum(ds/vp_up)
+
+            #loss due to spherical divergence
+            amp *= diverge(ds*numpoints*2)#two way
+            
+            #~ #transmission losses from source to cdp
+            rho_down = toolbox.find_points(sx, sz, cmpx, cmpz, numpoints, rho)
+            z0s = rho_down * vp_down
+            z1s = toolbox.roll(z0s, 1)
+            correction = np.cumprod(transmission_coefficient(z0s, z1s))[-1] 
+            amp *= correction
+
+            #amplitude loss at reflection point
+            correction = R[cmpx,cmpz]
+            amp *= correction
+
+            #transmission loss from cdp to source
+            rho_up = toolbox.find_points(cmpx, cmpz, gx, gz, numpoints, rho)
+            z0s = rho_up * vp_up
+            z1s = toolbox.roll(z0s, 1)
+            correction = np.cumprod(transmission_coefficient(z0s, z1s))[-1]
+            amp *= correction
+            
+            x = np.floor(gx).astype(np.int) 
+            t = np.floor(time*1000).astype(np.int)
+            output[x, t] += amp
+            #~ pylab.plot(x, t, '.')
 
 
-sutype = su.typeSU(1000)
-data = np.zeros(500, dtype=sutype)
-data['gx'] = range(1, 501)
-data['tracl'] = range(1,501)
-data['sx'] = 120
-data['offset'] = data['gx'] - data['sx']
-data['cdp'] = (data['sx']+data['gx'])/2
-data['trace'] = record.astype('f4')
-data['ns'] = 1000
-data['dt'] = 1000
-data = data[::2]
-su.writeSU(data, "record.su")
+    noise = np.random.normal(0.0, 1e-7, size=(output.shape))
+    output += noise
 
-agc = 0
-if agc:
-    func = toolbox.agc_func(record, 100)
-    record /= func
+    record = toolbox.conv(output, wavelet)
 
-pylab.figure()
-pylab.imshow(record.T, aspect='auto', cmap='hsv', vmax=np.amax(record), vmin=-1*np.amax(record))
-pylab.colorbar()
-pylab.show()
+    data = np.zeros(500, dtype=sutype)
+    data['gx'] = rx_coords
+    data['tracl'] = range(1,501)
+    data['sx'] = sx
+    data['offset'] = offsets
+    data['cdp'] = (data['sx']+data['gx'])/2
+    data['trace'] = record.astype('f4')
+    data['ns'] = 1000
+    data['dt'] = 1000
+    data = data[::2]
+
+    holder = np.hstack([holder, data])
+    print holder.shape
+    
+    
+su.writeSU(holder, "record.su")
+
+#~ agc = 0
+#~ if agc:
+    #~ func = toolbox.agc_func(record, 100)
+    #~ record /= func
+
+#~ pylab.figure()
+#~ pylab.imshow(record.T, aspect='auto', cmap='hsv', vmax=np.amax(record), vmin=-1*np.amax(record))
+#~ pylab.colorbar()
+#~ pylab.show()
 
 

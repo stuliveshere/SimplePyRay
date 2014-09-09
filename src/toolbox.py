@@ -72,7 +72,7 @@ class build_model(dict):
 		
 def agc_func(data, window):
     vec = np.ones(window)/(window/2.)
-    func = np.apply_along_axis(lambda m: np.convolve(np.abs(m), vec, mode='same'), axis=0, arr=data)
+    func = np.apply_along_axis(lambda m: np.convolve(np.abs(m), vec, mode='same'), axis=-1, arr=data)
     return func
     
 def find_points(x0, z0, x1, z1, nump, model):
@@ -93,4 +93,12 @@ def traveltime(x0, z0, x1, z1, model, nump, ds):
 	zint = np.ceil(z) #round em down
 	vel_points = model[xint.astype(np.int), zint.astype(np.int)] 
 	return np.sum(ds/vel_points)
+	
+def roll(input, shift):
+	input = np.pad(input, shift, mode='reflect') #pad to get rid of edge effect
+	output = np.roll(input, shift=shift) #shift the values by 1
+	return output[shift:-1*shift]
+	
+def conv(output, wavelet):
+	return np.apply_along_axis(lambda m: np.convolve(m, wavelet, mode='same'), axis=1, arr=output)
 	
