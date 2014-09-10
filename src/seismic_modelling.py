@@ -5,22 +5,17 @@ import pylab
 import sys
 
 #spherical divergence
-def diverge(distance):
-    r = np.abs(1.0/(distance*distance))
-    try:
-        infinites = np.isinf(r)
-        r[infinites] = np.amax(r[~infinites])
-    except IndexError:
-        pass
+def diverge(distance, coefficient):
+    r = np.abs(1.0/(distance**coefficient))
     return r
     
 def reflection_coefficient(z0, z1):
-    z = ((z1 - z0)**2)/(z1+z0)**2
-    if z1 < z0: z*= -1
+    z = ((z1 - z0))/(z1+z0)
     return z
 
 def transmission_coefficient(z0, z1):
-    return (4*z0*z1)/((z1+z0)**2)
+    r = (2.0*z0)/((z1+z0))
+    return r
     
 def refract(x, v0, v1, z0):
     ic = np.arcsin(v0/v1)
@@ -74,9 +69,9 @@ for sx in sx_coords:
 
     #now we need to calculate amplitudes. First, lets set all the amplitudes
     # to 0.05 (picked by testing)
-    direct_amps = np.ones_like(rx_coords) * 0.05
+    direct_amps = np.ones_like(rx_coords) * 0.1
     #calculate the spherical divergence correction
-    direct_correction = diverge(aoffsets)
+    direct_correction = diverge(aoffsets, 2.0)
     #apply correction
     direct_amps *= direct_correction
 
@@ -106,9 +101,9 @@ for sx in sx_coords:
     refraction_times = refract(aoffsets, v0, v1, z0)
 
     #create amplitude array
-    refract_amps = np.ones_like(rx_coords) * 0.1
+    refract_amps = np.ones_like(rx_coords)  *0.1
     #calculate the spherical divergence correction
-    direct_correction = diverge(aoffsets)
+    direct_correction = diverge(aoffsets, 2.0)
     #apply correction
     refract_amps *= direct_correction
 
@@ -162,19 +157,18 @@ for sx in sx_coords:
             time += np.sum(ds/vp_up)
 
             #loss due to spherical divergence
-            amp *= diverge(ds*numpoints*2)#two way
+            amp *= diverge(ds*numpoints, 3)#two way
             
             #~ #transmission losses from source to cdp
             rho_down = toolbox.find_points(sx, sz, cmpx, cmpz, numpoints, rho)
             z0s = rho_down * vp_down
             z1s = toolbox.roll(z0s, 1)
-            correction = np.cumprod(transmission_coefficient(z0s, z1s))[-1] 
+            correction = np.cumprod(transmission_coefficient(z0s, z1s) )[-1] 
             amp *= correction
 
             #amplitude loss at reflection point
             correction = R[cmpx,cmpz]
             amp *= correction
-
             #transmission loss from cdp to source
             rho_up = toolbox.find_points(cmpx, cmpz, gx, gz, numpoints, rho)
             z0s = rho_up * vp_up
@@ -190,6 +184,9 @@ for sx in sx_coords:
 
     noise = np.random.normal(0.0, 1e-7, size=(output.shape))
     output += noise
+
+    infinites = np.isinf(output)
+    output[infinites] = np.amax(output[~infinites])
 
     record = toolbox.conv(output, wavelet)
 
