@@ -5,26 +5,40 @@ import pylab
 import sys
 
 
-
 def nmo_calc(tx, vels, offset):
+	np.seterr(all='ignore')
 	t0 = np.sqrt(tx*tx - (offset*offset)/(vels*vels))
 	return t0
 	
-def nmo(trace, vels, mute):
+def nmo_trace(trace, vels, mute):
 	''' moves out a single trace (with headers) using
 	a single vel vector'''
-	dt = trace['dt']*1e-6
-	ns = trace['ns']
-	offset = np.abs(trace['offset'])
+	dt = np.float(trace['dt']*1e-6)
+	ns = np.float(trace['ns'])
+	offset = np.float(np.abs(trace['offset']))
+	mute += 1
 	tx = np.linspace(dt,dt*ns, ns, endpoint=True)
 	t0 = nmo_calc(tx, vels, offset)
-	stretch = np.hstack([np.diff(t0)/0.001, 1.0])
-	limits = np.isfinite(t0) & (stretch < 1.5)
-	t0 = t0[limits]
-	values = trace['trace'][limits]
+	nmo_limit = np.isfinite(t0)
+	
+	t0 = t0[nmo_limit]
+	stretch = np.hstack([np.diff(t0)/0.001, t0[-1]])
+	
+	stretch_limit = [stretch < mute]
+	
+	t0 = t0[stretch_limit]
+
+
+	values = trace['trace'][nmo_limit][stretch_limit]
+
 	vals =  np.interp(tx, t0, values)
+	
 	vals[tx < np.amin(t0)] = 0
-	return vals
+	trace['trace'] = vals
+	return trace
+	
+
+	
 		
 	
 def agc(output): #with headers
@@ -73,17 +87,29 @@ def supergather(step, width, bins, dataset):
 	return output
 			
 def semb(gather, vels):
+	holder = gather.copy()
+	holder['trace'] = 0
 	result = np.zeros((len(velrange), 1000), 'f')
 	for index, veln in enumerate(vels):
 		nt = gather.size
 		for i in range(nt):
+			trace_in = gather[i]
 			v = np.ones_like(gather[i]['trace']) * veln
-			gather[i] = nmo(gather[i], v, 1.0)
-			#~ print gather[i]['trace']
-			pylab.plot(gather[i]['trace'])
-		#~ pylab.imshow(gather['trace'].T, aspect='auto', cmap='hsv')
+			#~ nmo(gather[i], v, 1.0)
+			trace_out = nmo_trace(trace_in, v, 1.0)
+			pylab.plot(trace_in)
+			pylab.plot(trace_out)
+			
+		
+	
+		
+
 			pylab.show()
-		sys.exit()
+		
+		result[index] = stack(holder)['trace']
+		
+	return result	
+			
 		
 		
 	
@@ -107,6 +133,9 @@ for ind in inds:
 	velrange = range(500, 4500, 100)
 	velan = semb(supergather, velrange)
 	
+	print velan.shape
+	#~ break
+	
 	#~ output = np.zeros_like(holder)
 	
 	
@@ -120,8 +149,8 @@ for ind in inds:
 		#~ stack = np.sum(output['trace'], axis=0)
 		#~ semb[index2,:] = stack
 		
-	#~ pylab.imshow(semb.T, aspect='auto', cmap='hsv')
-	#~ pylab.show()
+	pylab.imshow(velan.T, aspect='auto', cmap='hsv')
+	pylab.show()
 
 	
 	
