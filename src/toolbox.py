@@ -1,6 +1,16 @@
 import numpy as np
 import matplotlib.pyplot as pylab
 
+def agc(output, window=100): #with headers
+	func = agc_func(output['trace'], window)
+	output['trace'] /= func
+	return output
+
+def display(gather, gain=0):
+	'''displays a gather using imshow'''
+	pylab.imshow(agc(gather)['trace'].T, aspect='auto', cmap='hsv')
+	pylab.show()
+
 def build_wavelet(lowcut, highcut, ns=200, dt = 0.001):
 	'''builds a band limited zero
 	phase wavelet by filtering in the 
@@ -101,4 +111,34 @@ def roll(input, shift):
 	
 def conv(output, wavelet):
 	return np.apply_along_axis(lambda m: np.convolve(m, wavelet, mode='same'), axis=1, arr=output)
+	
+def build_supergather(step, width, bins, dataset):
+	sutype = np.result_type(dataset)
+	cdps = np.unique(dataset['cdp'])
+	dataset['offset'] = np.abs(dataset['offset'])
+	supergather_centres = range(min(cdps)+width, max(cdps)-width, step)
+	supergather_slices = [cdps[a-width:a+width] for a in supergather_centres]
+	for index, inds in enumerate(supergather_slices):
+		for cdpn, cdp in enumerate(dataset['cdp']):
+			if cdp in inds:
+				dataset['ns1'][cdpn] = index
+				
+	dataset = dataset[dataset['ns1'] != 0]
+	output = np.empty(0, dtype=sutype)
+	for ind in np.unique(dataset['ns1']):
+		sg = dataset[dataset['ns1'] == ind]
+		hist = np.digitize(sg['offset'], bins)
+		sg['ep'] = hist
+		vals = np.unique(sg['ep'])
+		holder = np.zeros(len(vals), dtype=sutype)
+		for v in vals:
+			traces = sg[sg['ep'] == v]
+			header = traces[0]
+			fold = traces.size
+			trace = np.sum(traces['trace'], axis=-2)/np.float(fold)
+			header['trace'] = trace
+			holder[v-1] = header
+		output = np.concatenate([output, holder])
+		
+	return output
 	
