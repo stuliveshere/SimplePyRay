@@ -12,32 +12,33 @@ def nmo_calc(tx, vels, offset):
 def nmo_trace(trace, vels, mute):
 	''' moves out a single trace (with headers) using
 	a vector of velocities'''
+	holder = np.zeros_like(trace)
 	offset = np.abs(trace['offset']).astype(np.float)
 	ns = trace['ns']
 	dt = trace['dt'] * 1e-6
-	tx = np.linspace(dt, dt*ns, 
-	print tx
-	sys.exit()
-	
-	
+	tx = np.linspace(dt, dt*ns, ns)
+	t0 = nmo_calc(tx, vels, offset)
+	stretch = 100.*(np.pad(np.diff(t0),(0,1), 'reflect')-dt)/dt
 
-
-	return trace
+	filter = [(stretch >0) & ( stretch < mute)]
+	vals = np.interp(tx, t0[filter], trace['trace'][filter])
+	vals[tx < np.amin(t0[filter])] = 0.0
+	holder['trace'] = vals
+	return holder
 	
 	
 def stack(dataset):
 	'''stacks a single gather into a trace.
 	uses header of first trace. normalises
 	by the number of traces'''
-	header = dataset[0]
 	fold = dataset.size
-	trace = np.sum(dataset['trace'], axis=-2)/np.float(fold)
-	header['trace'] = trace
-	return header
+	holder = np.sum(dataset['trace'], axis=-2)/np.float(fold)
+	return holder
 
 
 			
 def semb(gather, vels):
+	holder = np.zeros_like(gather)
 	sutype = np.result_type(gather)
 	nvels = vels.size
 	nt = gather.size
@@ -45,12 +46,17 @@ def semb(gather, vels):
 	
 	result = np.zeros(nvels, dtype=sutype)
 	for v in range(nvels):
+		vector = np.ones(ns) * vels[v]
 		for i in range(nt):
-			vector = np.ones(ns) * vels[v]
-			gather[i] = nmo_trace(gather[i], vector, 1.0)
-		result[v] = stack(gather)
+			#~ pylab.plot(gather[i]['trace'])
+			holder[i] = nmo_trace(gather[i], vector, 100)
+			#~ pylab.plot(holder[i]['trace'])
+			#~ pylab.show()
+
+		#~ toolbox.display(holder)
+		result[v] = stack(holder)
 		
-	#~ return result	
+	return result	
 			
 		
 		
@@ -66,14 +72,15 @@ if __name__ == '__main__':
 	supergathers = toolbox.build_supergather(10, 3, aoffsets[::2], data)
 
 	inds = supergathers['ns1']
-	for ind in inds:
+	for ind in inds[50:]:
 		supergather = supergathers[supergathers['ns1'] == ind]
 		sorted_supergather = np.sort(supergather, order=['offset'])
 
 		supergather = toolbox.agc(supergather)
 
-		velrange = np.arange(500, 4500, 100)
+		velrange = np.arange(800.0, 4500.0, 100.0)
 		velan = semb(supergather, velrange)
+		toolbox.display(velan)
 
 		
 	
