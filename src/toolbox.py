@@ -4,11 +4,13 @@ import matplotlib.pyplot as pylab
 def agc(output, window=100): #with headers
 	func = agc_func(output['trace'], window)
 	output['trace'] /= func
+	output['trace'][~np.isfinite(output['trace'])] = 0
 	return output
 
 def display(gather, gain=0):
 	'''displays a gather using imshow'''
 	pylab.imshow(agc(gather)['trace'].T, aspect='auto', cmap='hsv')
+	pylab.colorbar()
 	pylab.show()
 
 def build_wavelet(lowcut, highcut, ns=200, dt = 0.001):
@@ -41,9 +43,9 @@ class build_model(dict):
 		super(build_model, self).__init__(*arg, **kw)
 		self['nlayers'] = 5
 		self['nx'] = 500
-		fault_throw = 10
+		fault_throw = 20
 		
-		self['dz'] = np.array([20, 40, 20, 100, 200, ])
+		self['dz'] = np.array([40, 80, 40, 200, 400, ])
 		self['vp'] = np.array([800., 2200., 1800., 2400., 4500., ])
 		self['vs'] = self['vp']/2.
 		self['rho'] = np.array([1500., 2500., 1400., 2700., 4500., ])
@@ -57,8 +59,8 @@ class build_model(dict):
 				layer *= self[model][index]
 				layer_list.append(layer)
 			self['model'][model] = np.hstack(layer_list)
-			self['model'][model][250:500,60:80] = self[model][1]
-			self['model'][model][250:500,60+fault_throw:80+fault_throw] = self[model][2]
+			self['model'][model][250:500,120:160] = self[model][1]
+			self['model'][model][250:500,120+fault_throw:160+fault_throw] = self[model][2]
 		
 		self['model']['z'] = self['model']['vp'] * self['model']['rho']
 		self['model']['R'] = (np.roll(self['model']['z'], shift=-1) - self['model']['z'])/(np.roll(self['model']['z'], shift=-1) + self['model']['z'])
@@ -133,11 +135,12 @@ def build_supergather(step, width, bins, dataset):
 		holder = np.zeros(len(vals), dtype=sutype)
 		for v in vals:
 			traces = sg[sg['ep'] == v]
-			header = traces[0]
+			header = traces[0].copy()
+			header['trace'].fill(0.0)
 			fold = traces.size
-			trace = np.sum(traces['trace'], axis=-2)/np.float(fold)
-			header['trace'] = trace
+			header['trace'] += np.sum(traces['trace'], axis=-2)/np.float(fold)
 			holder[v-1] = header
+		#~ display(holder)		
 		output = np.concatenate([output, holder])
 		
 	return output

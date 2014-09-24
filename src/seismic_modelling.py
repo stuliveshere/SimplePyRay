@@ -69,7 +69,7 @@ for sx in sx_coords:
 
     #now we need to calculate amplitudes. First, lets set all the amplitudes
     # to 0.05 (picked by testing)
-    direct_amps = np.ones_like(rx_coords) * 0.1
+    direct_amps = np.ones_like(rx_coords) * 0.01
     #calculate the spherical divergence correction
     direct_correction = diverge(aoffsets, 2.0)
     #apply correction
@@ -101,7 +101,7 @@ for sx in sx_coords:
     refraction_times = refract(aoffsets, v0, v1, z0)
 
     #create amplitude array
-    refract_amps = np.ones_like(rx_coords)  *0.1
+    refract_amps = np.ones_like(rx_coords)  *0.01
     #calculate the spherical divergence correction
     direct_correction = diverge(aoffsets, 2.0)
     #apply correction
@@ -182,13 +182,15 @@ for sx in sx_coords:
             #~ pylab.plot(x, t, '.')
 
 
-    noise = np.random.normal(0.0, 1e-7, size=(output.shape))
-    output += noise
+
 
     infinites = np.isinf(output)
     output[infinites] = np.amax(output[~infinites])
 
     record = toolbox.conv(output, wavelet)
+    
+    noise = np.random.normal(0.0, 1e-9, size=(output.shape))
+    record += noise
 
     data = np.zeros(500, dtype=sutype)
     data['gx'] = rx_coords
