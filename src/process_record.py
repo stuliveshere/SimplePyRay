@@ -4,7 +4,7 @@ import su
 import pylab
 import sys
 
-def stack(dataset):
+def stack_gather(dataset):
 	'''stacks a single gather into a trace.
 	uses header of first trace. normalises
 	by the number of traces'''
@@ -50,34 +50,54 @@ def semb(sgather, vels):
 	sutype = np.result_type(sgather)
 	ns = sgather['ns'][0]
 	result = np.zeros((nvels,ns),'f')
-	print sgather['offset']
-	
-
 	for v in range(nvels):
 		nmo = nmo_gather(sgather, vels[v], 100.0)
 		nmo['trace'][:80] *= 0
-		result[v,:] += np.abs(stack(nmo)['trace'])
+		result[v,:] += np.abs(stack_gather(nmo)['trace'])
 		
 		
-	pylab.imshow(result.T, aspect='auto', extent=(800.,4400.,1.,0.), cmap='spectral') #, vmin=0, vmax=1)
+	pylab.imshow(result.T, aspect='auto', extent=(800.,4400.,1.,0.), cmap='spectral', vmin=0, vmax=0.6)
 	pylab.colorbar()
 	pylab.show()
-				
+
+
 		
-		
+def stack_volume(dataset, vels):
+	cdps = np.unique(dataset['cdp'])
+	sutype = np.result_type(dataset)
+	output = np.zeros(cdps.size, dtype=sutype)
+	for index, cdp in enumerate(cdps):
+		gather = dataset[dataset['cdp'] == cdp]
+		nmo = nmo_gather(gather, vels, 100)
+		nmo['trace'][:,:80] *= 0.0
+		trace = stack_gather(nmo)
+		output[index] = trace
+	return output
+	
+
+	
 	
 if __name__ == '__main__':
 	
 	data = su.readSU('record.su')
 	
-	cdp_gathers = np.sort(data, order=['cdp', 'offset'])
+	cdp_gathers = 
 	cdp300 = cdp_gathers[cdp_gathers['cdp'] == 300]
 	#~ toolbox.display(cdp300)
-	su.writeSU(cdp_gathers, 'cdps.su')
-
 	
-	velrange = np.arange(800.0, 4500.0, 100.0)
-	result = semb(toolbox.agc(cdp300), velrange)
+	#~ velrange = np.arange(800.0, 4500.0, 100.0)
+	#~ result = semb(toolbox.agc(cdp300), velrange)
+	
+	velx = [0.91,0.23,0.38]
+	vely = [1531,1630, 1919]
+	
+	vector = build_vel_trace(velx, vely)
+	stack = stack_volume(cdp_gathers, vector)
+	stack = toolbox.agc(stack)
+	#~ toolbox.display(stack)
+	pylab.imshow(stack['trace'].T, aspect='auto', extent=(1,stack.size,1.,0.), cmap='spectral' , vmin=-8, vmax=8)
+	pylab.colorbar()
+	pylab.show()
 	
 	
 	#~ offsets = np.unique(data['offset'])

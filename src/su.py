@@ -102,7 +102,7 @@ def readSUheader(filename):
 	raw = open(filename, 'rb').read()
 	return np.fromstring(raw, dtype=su_header_dtype, count=1)
 
-def readSU(filename=None):
+def read(filename=None):
 	if filename == None:
 		raw= sys.stdin.read()
 	else:
@@ -116,7 +116,7 @@ def readData(raw):
 	data = np.fromstring(raw, dtype=file_dtype)
 	return data	
 	
-def writeSU(data, filename=None):
+def write(data, filename=None):
 	if filename == None:
 		data.tofile(sys.stdout)
 	else:

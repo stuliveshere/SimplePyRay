@@ -1,17 +1,20 @@
 import numpy as np
 import matplotlib.pyplot as pylab
+from su import *
 
 def agc(output, window=100): #with headers
 	func = agc_func(output['trace'], window)
 	output['trace'] /= func
 	output['trace'][~np.isfinite(output['trace'])] = 0
 	return output
-
-def display(gather, gain=0):
-	'''displays a gather using imshow'''
-	pylab.imshow(agc(gather)['trace'].T, aspect='auto', cmap='hsv')
-	pylab.colorbar()
-	pylab.show()
+	
+def mix(output, window=10):
+	vec = np.ones(window)/(window/2.)
+	func = np.apply_along_axis(lambda m: np.convolve(m, vec, mode='same'), axis=0, arr=output['trace'])
+	output['trace'] *= 0
+	output['trace'] += func
+	return output
+	
 
 def build_wavelet(lowcut, highcut, ns=200, dt = 0.001):
 	'''builds a band limited zero
