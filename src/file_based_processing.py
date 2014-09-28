@@ -7,6 +7,47 @@ import numpy as np
 import pylab
 from matplotlib.widgets import Slider
 
+
+#==================================================
+#                                 decorators
+#==================================================
+
+
+def io(func):
+
+
+	def wrapped(*args, **kwargs) :
+		
+		if type(args[0]) == type(''):
+			kwargs['dataset'] = toolbox.read(args[0])
+		else:
+			kwargs['dataset'] = args[0]
+		
+		result = func(**kwargs)
+			
+		if type(args[1]) == type(''):
+			
+			return toolbox.write(result, args[1])
+		else:
+			return result
+		
+	return wrapped
+
+
+    
+def benchmark(func):
+    """
+    A decorator that prints the time a function takes
+    to execute.
+    """
+    import time
+    def wrapper(*args, **kwargs):
+        t = time.clock()
+        res = func(*args, **kwargs)
+        print func.__name__, time.clock()-t
+        return res
+    return wrapper
+
 #==================================================
 #                                  misc functions
 #==================================================
@@ -112,10 +153,11 @@ def semb(input, vels):
 #==================================================
 #                                  processing functions
 #==================================================
-		
-def sort(input, output, keys):
-	dataset = toolbox.read(input)
-	toolbox.write(np.sort(dataset, order=['cdp', 'offset']), output)	
+
+@benchmark
+@io	
+def sort(**param):
+	return np.sort(param['dataset'], order=param['order'])
 	
 def slice(input, output, key, values):
 	dataset = toolbox.read(input)
@@ -159,7 +201,7 @@ def stack(input, output):
 	toolbox.write(holder, output)
 	
 if __name__ == '__main__':
-	#~ sort('record.su', 'cdp-gathers.su', ['cdp', 'offset'])
+	sort('record.su', 'cdp-gathers.su', order=['cdp', 'offset'])
 	#~ slice('cdp-gathers.su', 'cdp300.su', key='cdp', values=range(300,310))
 	#~ display('cdp300.su')
 	#~ nmo('cdp300.su', 'nmo300.su', vels, times, 30)
@@ -172,7 +214,7 @@ if __name__ == '__main__':
 	#~ agc('nmo-gathers.su', 'agc-nmo-gathers.su')
 	#~ mix('agc-nmo-gathers.su', 'mixed-gathers.su')
 	#~ stack('mixed-gathers.su', 'mixed-agc-stack.su')
-	display('mixed-agc-stack.su')
+	#~ display('mixed-agc-stack.su')
 
 	
 	
