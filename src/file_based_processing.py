@@ -14,23 +14,20 @@ from matplotlib.widgets import Slider
 
 
 def io(func):
-
-
+	'''
+	an io decorator that allows
+	input/output to be either a filename 
+	(i.e. a string) or an array
 	def wrapped(*args, **kwargs) :
-		
 		if type(args[0]) == type(''):
 			kwargs['dataset'] = toolbox.read(args[0])
 		else:
 			kwargs['dataset'] = args[0]
-		
 		result = func(**kwargs)
-			
 		if type(args[1]) == type(''):
-			
 			return toolbox.write(result, args[1])
 		else:
 			return result
-		
 	return wrapped
 
 
