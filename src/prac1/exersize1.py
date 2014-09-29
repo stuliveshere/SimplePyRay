@@ -23,12 +23,9 @@ def initialise():
 	#have a look at it - it has a build in display routine
 	#~ parameters['model'].display()
 	
+	#initialise data workspace
 	parameters['sutype'] = toolbox.typeSU(1000)
 	template = np.zeros(500, dtype=parameters['sutype'])	
-	
-	template['ns'] = 1000
-	template['dt'] = 1000
-	parameters['dt'] = 1e-3
 	
 	#define survey geometry, ie shot and reciever points
 	sx_coords = np.arange(500.0)[::2] + 2
@@ -36,6 +33,9 @@ def initialise():
 	parameters['gx'] = np.arange(500.0)
 	
 	#add some more useful stuff
+	template['ns'] = 1000
+	template['dt'] = 1000 #* 1e-6
+	parameters['dt'] = 1e-3	
 	parameters['sz'] = 0
 	parameters['gz'] = 0
 	parameters['nx'] = template['gx'].size	
@@ -43,8 +43,8 @@ def initialise():
 	
 if __name__ == '__main__':
 	workspace, param = initialise()
-	spike(workspace, 'direct.su', **param)
-	toolbox.display('direct.su', None, **param)
+	spike(workspace, None, **param)
+	toolbox.display(workspace, None, **param)
 	
 
 		
