@@ -36,7 +36,7 @@ def build_direct(workspace, **params):
 	direct_times = params['aoffsets']/directv
 	
 	#set base amplitude (from testing)
-	direct_amps = np.ones_like(params['gx']) * 0.01
+	direct_amps = np.ones_like(params['gx']) * 0.005
 	#calculate the spherical divergence correction
 	direct_correction = diverge(params['aoffsets'], 2.0)
 	#apply correction

@@ -60,7 +60,7 @@ def build_reflector(workspace, **params):
 			time += np.sum(ds/vp_down)
 
 			#traveltime from cdp to geophone
-			vp_up = toolbox.find_points(cmpx, cmpz, gx, gz, numpoints, vp)
+			vp_up = toolbox.find_points(cmpx, cmpz, gx-1, gz, numpoints, vp)
 			time += np.sum(ds/vp_up)
 
 			#loss due to spherical divergence
@@ -77,7 +77,7 @@ def build_reflector(workspace, **params):
 			correction = R[cmpx,cmpz]
 			amp *= correction
 			#transmission loss from cdp to source
-			rho_up = toolbox.find_points(cmpx, cmpz, gx, gz, numpoints, rho)
+			rho_up = toolbox.find_points(cmpx, cmpz, gx-1, gz, numpoints, rho)
 			z0s = rho_up * vp_up
 			z1s = toolbox.roll(z0s, 1)
 			correction = np.cumprod(transmission_coefficient(z0s, z1s))[-1]

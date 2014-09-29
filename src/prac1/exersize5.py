@@ -13,11 +13,22 @@ from exersize4 import build_reflector
 
 @io
 def build_combined(workspace, **params):
-	workspace = build_direct(workspace, None, **param)
-	workspace = build_refractor(workspace, None, **param)
-	workspace = build_reflector(workspace, None, **param)
+	workspace = build_direct(workspace, None, **params)
+	workspace = build_refractor(workspace, None, **params)
+	workspace = build_reflector(workspace, None, **params)
 	return workspace
 	
+@io
+def add_noise(workspace, **params):
+	noise = np.random.normal(0.0, 1e-8, size=(workspace['trace'].shape))
+	workspace['trace'] += noise
+	return workspace
+	
+@io
+def convolve_wavelet(workspace, **params):
+	wavelet = toolbox.ricker(60)	
+	workspace =  toolbox.conv(workspace, wavelet)
+	return workspace
 
 if __name__ == '__main__':
 	workspace, param = initialise()
@@ -33,9 +44,7 @@ if __name__ == '__main__':
 	workspace = build_combined(workspace, None, **param)
 	
 	#build wavelet
-	wavelet = toolbox.ricker(60)	
-	workspace =  toolbox.conv(workspace, wavelet)
-	toolbox.cp(workspace, 'record.su', **param)
-	workspace = toolbox.agc(workspace, None, **param)
-	toolbox.display(workspace, None, **param)
-	
+
+	#~ workspace = toolbox.agc(workspace, None, **param)
+	workspace = add_noise(workspace, 'record.su', **param)
+	#~ toolbox.display(workspace, None, **param)

@@ -28,7 +28,7 @@ def initialise():
 	template = np.zeros(500, dtype=parameters['sutype'])	
 	
 	#define survey geometry, ie shot and reciever points
-	sx_coords = np.arange(500.0)[::2] + 2
+	parameters['sx_coords'] = np.arange(500.0)[::2] + 1
 	template['gx'] = np.arange(500.0)+1
 	parameters['gx'] = np.arange(500.0)
 	
