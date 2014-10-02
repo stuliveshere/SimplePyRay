@@ -44,7 +44,8 @@ if __name__ == '__main__':
 	workspace = build_combined(workspace, None, **param)
 	
 	#build wavelet
+	convolve_wavelet(workspace, 'test.su', **param)
 
 	#~ workspace = toolbox.agc(workspace, None, **param)
-	workspace = add_noise(workspace, 'record.su', **param)
+	#~ workspace = add_noise(workspace, 'record.su', **param)
 	#~ toolbox.display(workspace, None, **param)

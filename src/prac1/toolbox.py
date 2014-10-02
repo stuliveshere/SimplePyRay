@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as pylab
 from matplotlib.widgets import Slider
+from scipy.signal import fftconvolve
 
 
 
@@ -155,9 +156,7 @@ def ricker(f, length=0.512, dt=0.001):
  
  
 def conv(workspace, wavelet):
-	result = np.apply_along_axis(lambda m: np.convolve(np.abs(m), wavelet, mode='same'), axis=-1, arr=workspace['trace'])
-	workspace['trace'].fill(0)
-	workspace['trace'] += result
+	workspace['trace'] = np.apply_along_axis(lambda m: fftconvolve(m, wavelet, mode='same'), axis=-1, arr=workspace['trace'])
 	return workspace
 	
 import numpy as np
