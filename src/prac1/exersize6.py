@@ -8,8 +8,6 @@ from exersize5 import build_combined, add_noise, convolve_wavelet
 if __name__ == "__main__":
 	workspace, param = initialise()
 	
-	output = np.zeros(0, dtype=param['sutype'])
-	
 	for sx in param['sx_coords']:
 		print sx
 		workspace['sx'] = sx
@@ -20,8 +18,7 @@ if __name__ == "__main__":
 		workspace = build_combined(workspace, None, **param)
 		workspace = convolve_wavelet(workspace, None, **param)
 		workspace = add_noise(workspace, None, **param)
-		output = np.hstack([output, workspace])
 		#need to add cdp locations to workspace
-	toolbox.cp(output, 'survey.su', **param)
+		toolbox.cp(workspace, 'shot%d.su' %sx, **param)
 		
 		

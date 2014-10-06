@@ -30,25 +30,26 @@ def transmission_coefficient(z0, z1):
 #-----------------------------------------------------------------------
 
 @io
-def build_reflector(workspace, **params):
+def build_reflector(dataset, **kwargs):
 	'''
 	builds reflector
 	'''
 	
 	#some shortcuts
-	vp = params['model']['model']['vp']
-	rho = params['model']['model']['rho']
-	R = params['model']['model']['R']
-	sz = params['sz']
-	gz = params['gz']
-	sx = params['sx']
+	vp = kwargs['model']['model']['vp']
+	rho = kwargs['model']['model']['rho']
+	R = kwargs['model']['model']['R']
+	sz = kwargs['sz']
+	gz = kwargs['gz']
+	sx = kwargs['sx']
 	
 	numpoints = 100 #used for interpolating through the model
-	for gx in workspace['gx']:
+	for gx in dataset['gx']:
 		cmpx = np.floor((gx + sx)/2.).astype(np.int) # nearest midpoint
 		h = cmpx - sx #half offset
 		#the next line extracts the non-zero reflection points at this midpoint
 		#and iterates over them
+		
 		for cmpz in (np.nonzero(R[cmpx,:])[0]):
 			ds = np.sqrt(cmpz**2 + (h)**2)/float(numpoints) # line step distance
 			#predefine outputs
@@ -86,8 +87,8 @@ def build_reflector(workspace, **params):
 			x = np.floor(gx).astype(np.int) -1
 			t = np.floor(time*1000).astype(np.int)
 
-			workspace['trace'][x, t] += amp
-	return workspace
+			dataset['trace'][x, t] += amp
+	return dataset
 
 
 	
@@ -97,6 +98,7 @@ if __name__ == '__main__':
 	sx = 100
 
 	workspace['sx'] = sx
+	param['sx'] = sx
 	workspace['offset'] = workspace['gx'] - workspace['sx']
 	param['aoffsets'] = np.abs(workspace['offset'])
 	

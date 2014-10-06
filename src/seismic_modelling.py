@@ -142,6 +142,10 @@ for sx in sx_coords:
         h = cmpx - sx #half offset
         #the next line extracts the non-zero reflection points at this midpoint
         #and iterates over them
+	print cmpx
+	print h
+	print np.nonzero(R[cmpx,:])
+	sys.exit()
         for cmpz in (np.nonzero(R[cmpx,:])[0]):
             ds = np.sqrt(cmpz**2 + (h)**2)/float(numpoints) # line step distance
             #predefine outputs

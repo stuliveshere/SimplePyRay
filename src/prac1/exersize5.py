@@ -12,23 +12,23 @@ from exersize4 import build_reflector
 #-----------------------------------------------------------------------
 
 @io
-def build_combined(workspace, **params):
-	workspace = build_direct(workspace, None, **params)
-	workspace = build_refractor(workspace, None, **params)
-	workspace = build_reflector(workspace, None, **params)
-	return workspace
+def build_combined(dataset, **kwargs):
+	dataset = build_direct(dataset, None, **kwargs)
+	dataset = build_refractor(dataset, None, **kwargs)
+	dataset = build_reflector(dataset, None, **kwargs)
+	return dataset
 	
 @io
-def add_noise(workspace, **params):
-	noise = np.random.normal(0.0, 1e-8, size=(workspace['trace'].shape))
-	workspace['trace'] += noise
-	return workspace
+def add_noise(dataset, **kwargs):
+	noise = np.random.normal(0.0, 1e-8, size=(dataset['trace'].shape))
+	dataset['trace'] += noise
+	return dataset
 	
 @io
-def convolve_wavelet(workspace, **params):
+def convolve_wavelet(dataset, **kwargs):
 	wavelet = toolbox.ricker(60)	
-	workspace =  toolbox.conv(workspace, wavelet)
-	return workspace
+	dataset =  toolbox.conv(dataset, wavelet)
+	return dataset
 
 if __name__ == '__main__':
 	workspace, param = initialise()
@@ -46,6 +46,6 @@ if __name__ == '__main__':
 	#build wavelet
 	convolve_wavelet(workspace, 'test.su', **param)
 
-	#~ workspace = toolbox.agc(workspace, None, **param)
+	workspace = toolbox.agc(workspace, None, **param)
 	#~ workspace = add_noise(workspace, 'record.su', **param)
-	#~ toolbox.display(workspace, None, **param)
+	toolbox.display(workspace, None, **param)

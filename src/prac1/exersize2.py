@@ -18,6 +18,10 @@ def diverge(distance, coefficient=3.0):
 	'''spherical divergence correction''' 
 	r = np.abs(1.0/(distance**coefficient))
 	return r
+	
+def direct(distance, velocity):
+	time = distance/velocity
+	return time
 
 	
 #-----------------------------------------------------------------------
@@ -25,7 +29,7 @@ def diverge(distance, coefficient=3.0):
 #-----------------------------------------------------------------------
 
 @io
-def build_direct(workspace, **params):
+def build_direct(dataset, **kwargs):
 	'''
 	calculates direct wave arrival time and 
 	imposes it upon an array. assumes 330 m/s
@@ -33,19 +37,19 @@ def build_direct(workspace, **params):
 	'''
 
 	directv = 330.0 #m/s
-	direct_times = params['aoffsets']/directv
+	direct_times = direct(kwargs['aoffsets'], directv)
 	
 	#set base amplitude (from testing)
-	direct_amps = np.ones_like(params['gx']) * 0.005
+	direct_amps = np.ones_like(kwargs['gx']) * 0.005
 	#calculate the spherical divergence correction
-	direct_correction = diverge(params['aoffsets'], 2.0)
+	direct_correction = diverge(kwargs['aoffsets'], 2.0)
 	#apply correction
 	direct_amps *= direct_correction
 	direct_amps[~np.isfinite(direct_amps)] = 0.01
 	
 	#we are not interested in anything after 1 second
 	limits = [direct_times < 1]
-	x = params['gx'][limits]
+	x = kwargs['gx'][limits]
 	t = direct_times[limits]
 	direct_amps = direct_amps[limits]
 	
@@ -56,8 +60,8 @@ def build_direct(workspace, **params):
 	x = np.floor(x).astype(np.int)
 	t = np.floor(t).astype(np.int)
 	
-	workspace['trace'][x, t] += direct_amps
-	return workspace
+	dataset['trace'][x, t] += direct_amps
+	return dataset
 
 
 	
@@ -72,9 +76,9 @@ if __name__ == '__main__':
 	
 
 	#lets set up for calculating direct wave
-	build_direct(workspace, 'direct.su', **param)
-	tmp = toolbox.agc('direct.su', None, **param)
-	toolbox.display(tmp, None, **param)
+	build_direct(workspace, None, **param)
+	toolbox.agc(workspace, None, **param)
+	toolbox.display(workspace, None, **param)
 
 		
 

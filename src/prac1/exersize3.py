@@ -28,22 +28,22 @@ def refract(x, v0, v1, z0):
 #-----------------------------------------------------------------------
 
 @io
-def build_refractor(workspace, **params):
+def build_refractor(dataset, **kwargs):
 	'''
 	builds refractor
 	'''
 	
 	#some shortcuts
-	v0 = params['model']['vp'][0]
-	v1 = params['model']['vp'][1]
-	z0 = params['model']['dz'][0]
+	v0 = kwargs['model']['vp'][0]
+	v1 = kwargs['model']['vp'][1]
+	z0 = kwargs['model']['dz'][0]
 	
-	refraction_times = refract(params['aoffsets'], v0, v1, z0)
+	refraction_times = refract(kwargs['aoffsets'], v0, v1, z0)
 
 	#create amplitude array
-	refract_amps = np.ones_like(params['gx']) * 0.01
+	refract_amps = np.ones_like(kwargs['gx']) * 0.01
 	#calculate the spherical divergence correction
-	refract_correction = diverge(params['aoffsets'], 2.0)
+	refract_correction = diverge(kwargs['aoffsets'], 2.0)
 	#apply correction
 	refract_amps *= refract_correction
 	refract_amps[~np.isfinite(refract_amps)] = 0.01
@@ -51,9 +51,9 @@ def build_refractor(workspace, **params):
 	#it probably wont exceed 1s, but to make it look right we 
 	#need to limit it so that it doesnt cross over the direct
 	directv = 330.0 #m/s
-	direct_times = params['aoffsets']/directv
+	direct_times = kwargs['aoffsets']/directv
 	limits = [refraction_times < direct_times]
-	x = params['gx'][limits]
+	x = kwargs['gx'][limits]
 	t = refraction_times[limits]
 	refract_amps = refract_amps[limits]
 
@@ -62,8 +62,8 @@ def build_refractor(workspace, **params):
 	t *= 1000 # milliseconds
 	t = np.floor(t).astype(np.int)
 
-	workspace['trace'][x, t] += refract_amps
-	return workspace
+	dataset['trace'][x, t] += refract_amps
+	return dataset
 
 
 	
