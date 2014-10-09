@@ -18,14 +18,14 @@ def run(sx):
 	dataset = convolve_wavelet(dataset, None, **kwargs)
 	dataset = add_noise(dataset, None, **kwargs)
 	#need to add cdp locations to dataset
-	toolbox.cp(dataset, 'shot%d.su' %sx, **kwargs)	
+	toolbox.cp(dataset[::2], 'shot%d.su' %sx, **kwargs)	
 
 if __name__ == "__main__":
-	#~ workspace, param = initialise()
-	#~ pool = Pool(processes=8)
-	#~ result = pool.map(run, param['sx_coords'])
-	workspace = toolbox.agc('./su/shot201.su', None, None)
-	toolbox.display(workspace, None, None)
+	workspace, param = initialise()
+	pool = Pool(processes=8)
+	result = pool.map(run, param['sx_coords'])
+	#workspace = toolbox.agc('shot201.su', None, None)
+	#toolbox.display(workspace, None, None)
 
 		
 		
