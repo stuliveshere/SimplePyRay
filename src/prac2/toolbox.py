@@ -117,7 +117,7 @@ def scan(dataset):
 	print "========================================="	
 		
 
-def build_vel_trace(times, velocities, ns=1000, dt=0.001):
+def build_vels(times, velocities, ns=1000, dt=0.001):
 	'''builds a full velocity trace from a list of vels and times'''
 	tx = np.linspace(dt, dt*ns, ns)
 	vels = np.interp(tx, times, velocities)

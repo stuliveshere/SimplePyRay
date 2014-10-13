@@ -5,18 +5,22 @@ import toolbox
 import numpy as np
 from exercise1 import initialise
 import pylab
+import cProfile
 
 #-----------------------------------------------------------------------
 #              useful functions
 #-----------------------------------------------------------------------
 
 def _nmo_calc(tx, vels, offset):
+	'''calculates the zero offset time'''
 	t0 = np.sqrt(tx*tx - (offset*offset)/(vels*vels))
 	return t0
 	
 @io
 def nmo(dataset, **kwargs):
-	for index, trace in enumerate(dataset):
+	it = np.nditer(dataset, flags=['f_index'])
+	for trace in it:
+		index= it.index
 		aoffset = np.abs(trace['offset']).astype(np.float)
 		ns = kwargs['ns']
 		dt = kwargs['dt'] 
@@ -38,17 +42,21 @@ def nmo(dataset, **kwargs):
 		dataset[index]['trace'] *= 0
 		dataset[index]['trace'] += values
 	return dataset
+
 #-----------------------------------------------------------------------
 #              main functions
 #-----------------------------------------------------------------------
 
 if __name__ == "__main__":
+	#intialise workspace and parameter dictionary
 	workspace, params = initialise('cdp201.su')
-	params['smute'] = 100.0
-	params['vels'] = np.ones(1000, 'f') * 1500.0
+	
+	#set stretch mute and vels
+	params['smute'] = 10000.0
+	params['vels'] = toolbox.build_vels([0.5], [1500])
 	nmo(workspace, None, **params)
 	
-	
+
 	toolbox.agc(workspace, None, None)
 	toolbox.display(workspace, None, None)
 	pylab.show()

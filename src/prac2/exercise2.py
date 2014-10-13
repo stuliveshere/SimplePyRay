@@ -1,4 +1,3 @@
-#import su files from prac1
 #sort into cdp/offsets
 #view a cdp gather
 
@@ -16,26 +15,42 @@ from exercise1 import initialise
 
 None
 
-	
+        
 #-----------------------------------------------------------------------
 #              main functions
 #-----------------------------------------------------------------------
 
 if __name__ == "__main__":
-	workspace, params = initialise('survey.su')
-	
-	cdp_gathers = np.sort(workspace, order=['cdp', 'offset'])
-	cdp201 = cdp_gathers[cdp_gathers['cdp'] == 201]
-	toolbox.cp(cdp201, 'cdp201.su', None)
-	
-	
-	params['primary'] = 'cdp'
-	params['secondary'] = 'offset'
-	params['step'] = 20
-	
-	toolbox.scroll(cdp_gathers, None, **params)
-	
-	pylab.show()
-	
-	
-	
+        #intialise workspace and parameter dictionary
+        workspace, params = initialise('survey.su')
+        
+        # we are going to pull out 1 cdp for testing with.
+        #firstly, use the scroll tool to view the cdps, and 
+        #then pick one near the middle of the volume
+        params['primary'] = 'cdp'
+        params['secondary'] = 'offset'
+        params['step'] = 20	
+        #toolbox.scroll(workspace, None, **params)
+        
+        #we then want to extract that single cdp
+        #for testing with later. we can do that 
+        #the following way
+        cdp201 = workspace[workspace['cdp'] == 201]
+        #view it
+        #toolbox.agc(cdp201, None ,**params)
+        #toolbox.display(cdp201, None, **params)
+        
+        #we have the right cdp = but the traces are in the wrong 
+        #order. lets sort by offset
+        
+        cdp201 = np.sort(cdp201, order=['cdp', 'offset'])
+        #toolbox.display(cdp201, None, **params)
+        
+        #output it for later
+        toolbox.cp(cdp201, 'cdp201.su', None)       
+        
+        
+        pylab.show()
+        
+        
+        

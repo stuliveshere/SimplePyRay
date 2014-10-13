@@ -15,9 +15,15 @@ from exercise1 import initialise
 #-----------------------------------------------------------------------
 @io
 def tar(dataset, **kwargs):
+	#pull some values out of the
+	#paramter dictionary
 	gamma = kwargs['gamma']
 	t = kwargs['times']
+	
+	#calculate the correction coeffieicnt
 	r  = np.exp(gamma * t)
+	
+	#applyt the correction to the data
 	dataset['trace'] *= r
 	return dataset
 
@@ -27,10 +33,18 @@ def tar(dataset, **kwargs):
 #-----------------------------------------------------------------------
 
 if __name__ == "__main__":
+	#intialise workspace and parameter dictionary
 	workspace, params = initialise('cdp201.su')
 
-	params['gamma'] = 20
+	#set the value of gamma you want to test here
+	params['gamma'] = 10
+	#and apply
 	tar(workspace, None, **params)
+	
+	#we cant use agc to look at this.  The display 
+	#function has been modified so you can adjust
+	#the clip
+	params['clip'] = 1e-4
 	toolbox.display(workspace, None, **params)
 	pylab.show()
 	

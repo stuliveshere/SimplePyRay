@@ -12,7 +12,7 @@ import pylab
 #              useful functions
 #-----------------------------------------------------------------------
 
-def stack_gather(gather):
+def _stack_gather(gather):
 	'''stacks a single gather into a trace.
 	uses header of first trace. normalises
 	by the number of traces'''
@@ -31,17 +31,26 @@ def stack(dataset, **kwargs):
 	return result
 	
 if __name__ == '__main__':
+	#initialise your test cdp first
 	workspace, params = initialise('survey.su')
-	params['vels'] = np.ones(1000)*1500.0
-	params['smute'] = 100
-	params['gamma'] = 10
-	params['clip'] = 1e-5
 	
+	#first do the true amplitude recovery
+	params['gamma'] = 10
 	tar(workspace, None, **params)
+	
+	#then apply NMO	
+	params['smute'] = 100.0
+	params['vels'] = toolbox.build_vels([0.5], [1500])
 	nmo(workspace, None, **params)
 	
-
+	#we will apply a pre-stack agc
+	toolbox.agc(workspace, None, None)
+	
+	#stack it
 	section = stack(workspace, None, **params)
+	
+	#display it
+	#params['clip'] = 1e-5
 	toolbox.display(section, None, **params)
 	
 	pylab.show()

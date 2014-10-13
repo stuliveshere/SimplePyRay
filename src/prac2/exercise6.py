@@ -10,7 +10,7 @@ import matplotlib.pyplot as pylab
 from exercise1 import initialise
 from exercise3 import tar
 from exercise4 import nmo
-from exercise5 import stack_gather
+from exercise5 import _stack_gather
 
 
 #-----------------------------------------------------------------------
@@ -27,7 +27,7 @@ def semb(workspace,**kwargs):
 		kwargs['vels'] = np.ones(1000, 'f') * vels[v]
 		nmo(panel, None, **kwargs)
 		toolbox.agc(panel, None, None)
-		result[v,:] += np.abs(stack_gather(panel)['trace'])
+		result[v,:] += np.abs(_stack_gather(panel)['trace'])
 		
 		
 	pylab.imshow(result.T, aspect='auto', extent=(min(vels), max(vels),1.,0.), cmap='spectral')
@@ -46,10 +46,10 @@ if __name__ == "__main__":
 	velocities = np.arange(800, 4000, 50)
 	params['velocities'] = velocities
 	params['smute'] = 100
-	Qsemb(workspace, **params)
+	semb(workspace, **params)
 	v = [1417, 1510,1878]
 	t = [0.171, 0.215, 0.381]
-	params['vels'] = toolbox.build_vel_trace(t, v)
+	params['vels'] = toolbox.build_vels(t, v)
 	nmo(workspace, None, **params)
 	toolbox.agc(workspace, None, None)
 	toolbox.display(workspace, None, None)
