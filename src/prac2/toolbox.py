@@ -35,41 +35,96 @@ def io(func):
 
 @io	
 def display(workspace, **params):
-	
-	#~ agc = params['agc']
-	
-	def update(val):
-		vmax = smax.val
-		vmin = smin.val
-		im.set_clim(vmax=vmax, vmin=vmin)
-		fig.canvas.draw_idle()
-	
-	fig = pylab.figure()
 	'''displays a gather using imshow'''
+	global clip
+	def key_event(e):
+		global clip
+		if e.key == "right":
+			clip *= 1.1
+		elif e.key == "left":
+			clip /= 1.1
+		else:
+			return
+			
+		fig.clf()
+		ax = fig.add_subplot(111)
+		im = ax.imshow(workspace['trace'].T, aspect='auto', cmap='Greys', vmax =clip, vmin=-1*clip)
+		fig.colorbar(im)
+		fig.canvas.draw()
+	
+	if 'clip' in params:
+		clip = params['clip']
+	else:
+		clip = np.amax(np.abs(workspace['trace']))
+	fig = pylab.figure()
+	ax = fig.add_subplot(111)
+	fig.canvas.mpl_connect('key_press_event', key_event)
+	im = ax.imshow(workspace['trace'].T, aspect='auto', cmap='Greys', vmax =clip, vmin=-1*clip)
+	fig.colorbar(im)
 
-	vmax = np.amax(workspace['trace'])
-	vmin = np.amin(workspace['trace'])
-	#~ if agc:
-		#~ workspace = toolbox.agc(workspace)
-	im = pylab.imshow(workspace['trace'].T, aspect='auto', cmap='Greys', vmax =vmax, vmin=vmin)
-	pylab.colorbar()
-	axcolor = 'lightgoldenrodyellow'
-	axmax = pylab.axes([0.08, 0.06, 0.65, 0.01], axisbg=axcolor) #rect = [left, bottom, width, height] in normalized (0, 1) units
-	smax = Slider(axmax, 'vmax', vmin, vmax, valinit=vmax)
-	smax.on_changed(update)
-	axmin = pylab.axes([0.08, 0.03, 0.65, 0.01], axisbg=axcolor) #rect = [left, bottom, width, height] in normalized (0, 1) units
-	smin = Slider(axmin, 'vmin', vmin, vmax, valinit=vmin)
-	smin.on_changed(update)	
-	smin.on_changed(update)
 	
-	pylab.draw()
+start = 0
+clip = 0
+@io	
+def scroll(dataset, **kwargs):
+	'''
+	iterates through dataset using
+	left and right keys
+	parameters required:
+		primary key
+		seconary key
+		step size
+	'''
+	dataset = np.sort(dataset, order=(kwargs['primary'], kwargs['secondary']))
+	keys = np.unique(dataset[kwargs['primary']])
+	keys = keys[::kwargs['step']]
+	nkeys = keys.size
 	
-def scan_headers(input):
-	dataset = toolbox.read(input)
-	print dataset.shape
-	for key, t in toolbox.su_header_dtype.descr:
-		print key, np.amin(dataset[key]), np.amax(dataset[key])
+	
+	def key_event(e):
+		global start
+		if e.key == "right":
+			start = start + 1
+		elif e.key == "left":
+			start = start - 1
+		else:
+			return
+			
+		slice =  dataset[dataset[kwargs['primary']] == keys[start]]
+		agc(slice, None, None)
+		ax.cla()
+		im = ax.imshow(slice['trace'].T, aspect='auto', cmap='Greys')
+		ax.set_title('%s = %d' %(kwargs['primary'], keys[start]))
+		fig.canvas.draw()
+	
+	slice =  dataset[dataset[kwargs['primary']] == keys[start]]
+	agc(slice, None, None)
+
+	fig = pylab.figure()
+	ax = fig.add_subplot(111)
+	fig.canvas.mpl_connect('key_press_event', key_event)
+	im = ax.imshow(slice['trace'].T, aspect='auto', cmap='Greys')
+	ax.set_title('%s = %d' %(kwargs['primary'], keys[start]))
+	
+def scan(dataset):
+	print "    %0-35s: %0-15s   %s" %('key', 'min', 'max')
+	print "========================================="
+	for key in np.result_type(dataset).descr:
+		a = np.amin(dataset[key[0]])
+		b = np.amax(dataset[key[0]])
+		if (a != 0) and (b != 0):
+			print "%0-35s %0-15.3f  %.3f" %(key, a, b)
+	print "========================================="	
 		
+
+def build_vel_trace(times, velocities, ns=1000, dt=0.001):
+	'''builds a full velocity trace from a list of vels and times'''
+	tx = np.linspace(dt, dt*ns, ns)
+	vels = np.interp(tx, times, velocities)
+	vels = np.pad(vels, (100,100), 'reflect')
+	vels = np.convolve(np.ones(100.0)/100.0, vels, mode='same')
+	vels = vels[100:-100]
+	return vels
 	
 class build_model(dict):
 	def __init__(self,*arg,**kw):
@@ -152,7 +207,9 @@ def agc(workspace, window=100, **params):
 def ricker(f, length=0.512, dt=0.001):
     t = np.linspace(-length/2, (length-dt)/2, length/dt)
     y = (1.0 - 2.0*(np.pi**2)*(f**2)*(t**2)) * np.exp(-(np.pi**2)*(f**2)*(t**2))
-    return y
+    y = np.around(y, 10)
+    inds = np.nonzero(y)[0]
+    return y[np.amin(inds):np.amax(inds)]
  
  
 def conv(workspace, wavelet):

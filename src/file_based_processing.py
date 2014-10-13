@@ -35,8 +35,6 @@ def build_vel_trace(times, velocities, ns=1000, dt=0.001):
 	vels = np.pad(vels, (100,100), 'reflect')
 	vels = np.convolve(np.ones(100.0)/100.0, vels, mode='same')
 	vels = vels[100:-100]
-	#~ pylab.plot(vels)
-	#~ pylab.show()
 	return vels
 
 #==================================================
