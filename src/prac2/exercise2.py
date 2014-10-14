@@ -44,10 +44,11 @@ if __name__ == "__main__":
         #order. lets sort by offset
         
         cdp201 = np.sort(cdp201, order=['cdp', 'offset'])
-        #toolbox.display(cdp201, None, **params)
-        
+                
         #output it for later
         toolbox.cp(cdp201, 'cdp201.su', None)       
+        params['clip'] = 1e-6
+        toolbox.display('cdp201.su', None, **params)
         
         
         pylab.show()
