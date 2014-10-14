@@ -33,7 +33,7 @@ For this prac we will use the following processing sequence:
 \end{enumerate}
 This is somewhat like a processing sequence used in a commercial processing house.  Note the iterative nature of the sequence - this is a common trait of seismic processing.
 \par~\\
-The final image quality is influenced by the accuracy of the seismic velocities and the processing parameters used.  Inaccurate velocities can lead to imperfect moveout which can affect stack quality.  Poor selection of processing parameters can harm the data - for example a harsh noise attenuation routine might attenuate the signal as well as the noise. Finding the optimum processing parameters is the art of processing, and it usually involves significant amounts of testing.
+The final image quality is influenced by the accuracy of the seismic velocities and the processing parameters used.  Inaccurate velocities can lead to imperfect moveout which can affect stack quality.  Poor selection of processing parameters can harm the data - for example a harsh noise attenuation routine might attenuate the signal as well as the noise. Finding the optimum processing parameters is the art of procesing, and it usually involves significant amounts of testing.
 \par~\\
 In this prac you will be picking your own velocities and selecting your own processing parameters.  You will be expected to test a range of parameters and discuss why you chose those parameters in your report.  
 \subsection*{Exercise 1: Load data and perform QC}
@@ -64,7 +64,7 @@ Write a python function which implements this formula, and apply to your test ga
 \par~\\
 
 \subsection*{Exercise 4: Normal moveout correction}
-Notice in the raw CMP gathers the reflectors have a hyperbolic shape.  In order to stack a CMP gather the reflectors need to be flat.  The reason for the hyperbolic shape is normal moveout, and flattening reflectors is generally referred to as normal moveout correction.  For a flat, horizontal reflector, the travel-time equation is
+Notice in the raw CMP gathers the reflectors have a hyperbolic shape.  In order to stack a CMP the reflectors need to be flat.  The reason for the hyperbolic shape is normal moveout, and flattening reflectors is generally referred to as normal moveout correction.  For a flat, horizontal reflector, the travel-time equation is
 \[ {t_x}^2 = {t_0}^2 + \frac{x^2}{v^2}\]
 where
 \begin{itemize}
@@ -73,14 +73,14 @@ where
 \item $x$ is the offset
 \item $v$ is the velocity
 \end{itemize}
-Write a python function which implements the normal moveout correction. That is, re-arrange the above equation so that we can calculate the zero offset travel-time $t_0$ for some offset and velocity.
+Write a python function which implements the normal moveout correction. That is, re-arrange the above equation so that we can calculate the zero offset travel-time $t_0$.
 \par~\\
 The function which applies your move out correction to the dataset has been supplied. Using your test CMP gather, try to find a single velocity (aka constant velocity) which flattens the reflectors the most. Show that gather before and after moveout correction.  Discuss the issues associated with normal moveout with a constant velocity.
 \par~\\
-Note the code relating to "stretch".  The amount of moveout correction is not linear with time. Slow, shallow data tends to suffer from significant stretching. Experiment with stretch values on your test CMP gather. Show a gather with and without stretch.  Discuss the potential impact of stretched data on a stack.
+Note the code relating to "stretch".  The amount of moveout correction is not linear, and thus shallow data tends to get stretched. Experiment with stretch values on your test CMP gather. Show a gather with and without stretch.  Discuss the potential impact of stretched data on a stack.
 
 \subsection*{Exercise 5: Field Stack}
-Stacking a gather involves taking all of the traces in a single CMP gather and summing them together into once trace.  The amplitude of the trace is then normalized by the fold of the gather.  Thus stacking can also be considered as finding the average trace at a given CMP location.  When all CMP gathers are stacked, an image can be built with one trace at each CMP location.  This image is generally referred to as a stack or a stacked section.
+Stacking involves taking all of the traces in a single CMP gather and summing together into once trace.  The amplitude of the trace is then normalized by the fold of the gather.  Thus stacking can also be considered as finding the average trace at a given CMP location.  When all CMP gathers are stacked, the resulting image has one trace at each CMP location.  This is generally referred to as a stack or a stacked section.
 \par~\\
 Write a function which will stack any gather given to it.  Note this can be done in one line. 
 \par~\\
@@ -88,18 +88,18 @@ Write a function which will stack any gather given to it.  Note this can be done
 \par~\\
 \emph{An even bigger hint: think about the axis you want to use numpy.mean() along}
 \par~\\
-Once you have stacking working, you are ready to do a field stack.  Initialise the entire seismic volume, apply TAR, NMO, and then stack.  Ask the tutors to check your code before you run it - running the NMO will take a few minutes. Try it with and without pre-stack AGC. What are some of the problems with the stack? What is the large feature above the coals?
+Once you have stacking working, you are ready to do a field stack.  Initialise the entire seismic volume, apply TAR, NMO, and then stack.  Ask the tutors to check your code before you run it.  This will take a few minutes to run - the NMO is not particularly efficient. Try it with and without pre-stack AGC. What are some of the problems with the stack? What is the large feature above the coals?
   
 
 \subsection*{Exercise 6: First Velocity Analysis}
-In exercise 4 we moved out the test CDP with a constant velocity.  A more realistic scenario would be to pick a number of velocities, one for each layer. One method of determining the optimal stacking velocities is known as semblance analysis.  Essentially, a given CDP is moved out and stacked with a range of velocities. The best stacking velocity will result in the highest amplitude stack for a given reflector.  By visualizing all the velocities at once, you can see exactly where the maximum stacking energy occurs.
+In exercise 4 we moved out the test CDP with a constant velocity.  A more realistic scenario would be to pick a number of velocities, one for each layer. One method of determining the optimal stacking velocities is known as semblence analysis.  Essentially, a given CDP is moved out and stacked with a range of velocities. The best stacking velocity will result in the highest amplitude stack for a given reflector.  By visualising all the velocities at once, you can see exactly where the maximum stacking energy occurs.
 \par~\\
-A simplistic semblance routine has been given to you in exercise 6. Run exercise 6 on your test CDP. Pick velocities and times for the 3 layers, and make a note of these for later.  What is the large high energy event which can also be seen in the semblance plot?
+A simplistic semblence routine has been given to you in exercise 6. Run exercise 6 on your test CDP. Pick velocities and times for the 3 layers, and make a note of these for later.  What is the large high energy event which can also be seen in the semblence plot?
 
 \subsection*{Exercise 7: Noise attenuation - Top Mute}
-As seen in the stack in exercise 5, and in the semblance plot in exercise 6, some of the refractor energy is leaking through the stack.  There are a number of different ways we could attenuate or even entirely remove the refractor.  The refractor often has lower frequency than our reflectors, so a frequency filter might knock back the high amplitude low frequency components. But in this case the refractor is very linear and can be targeted by a mute window.
+As seen in the stack in Exercise 5, and in the semblence plot in exercise 6, parts of the refractor are being treated as reflectors and are being stacked into our dataset.  There are a number of different ways we could attenuate or even entirely remove the refractor.  The refractor often has lower frequency than our reflectors, so a frequency filter might knock back the high amplitude low frequency components. But in this case the refractor is very linear and can be targetted by a mute window.
 \par~\\
-We could calculate the dip of the refractor, come up with a geometric formula, calculate the time to refractor at a given geophone, and then apply a mute, but an easier method is to use what is called a linear move-out (LMO).  An LMO is similar in concept to an NMO, but instead of flattening a hyperbolic reflector it flattens a linear event.  Because the event is linear, the travel-time equation is our old friend the velocity equation
+We could calculate the dip of the refractor, come up with a geometric formula, calculate the time to refractor at a given geophone, and then apply a mute, but an easier method is to use what is called a linear move-out (LMO).  An LMO is similiar in concept to an NMO, but instead of flattening a hyperbolic reflector it flattens a linear event.  Because the event is linear, the traveltime equation is our old friend the velocity equation
 \[ v = \frac{x}{t} \]
 where
 \begin{itemize}
@@ -137,7 +137,7 @@ Compare your first velocity stack to the brute stack we generated earlier. What 
 \subsection*{Exercise 9: Post-stack noise attenuation}
 Consider what happens when you run a smoothing window along a trace.  Events which are shorter than the smoothing window will tend to be smoothed out - events which are longer than the smoothing window will tend to be left along. Now consider what happens when you run a smoothing window along a time slice, between traces.  Events shorter than our smoothing window, for example random noise, will tend to be attenuated, and events longer than our window will tend to be left alone. This sounds like a good thing, so lets try it.
 \par~\\
-The process we are going to use is sometimes referred to as trace mixing. This code has been supplied to you in exercise 9. Experiment with mixing window sizes to find one that works well.  What are some of the downsides of trace mixing?
+The process is actually a form of trace mixing, although the version we are going to use today is slightly different, because we are going to use the power of numpy. This code has been supplied to you in exercise 9. Experiment with mixing window sizes to find one that works well.  What are some of the downsides of trace mixing?
 \par~\\
 \emph{Extra marks: perform the trace mixing pre-stack.  What are the pros and cons of a pre-stack trace mix?}
 
