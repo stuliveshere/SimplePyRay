@@ -34,6 +34,8 @@ def initialise():
         parameters['dt'] = 1e-3	
         parameters['sz'] = 0
         parameters['gz'] = 0
+        parameters['offset'] = parameters['gx'] - parameters['sx']
+        parameters['aoffsets'] = np.abs(parameters['offset'])
         return workspace, parameters
         
 if __name__ == '__main__':
