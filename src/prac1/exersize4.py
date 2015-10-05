@@ -45,62 +45,61 @@ def build_reflector(dataset, **kwargs):
         gx = kwargs['gx']
         
         numpoints = 100 #used for interpolating through the model
-        for x in  gx:
-                cmpx = np.floor((gx + sx)/2.).astype(np.int) # nearest midpoint
+        for g in  gx:
+                cmpx = np.floor((g + sx)/2.).astype(np.int) # nearest midpoint
                 h = cmpx - sx #half offset
                 #the next line extracts the non-zero reflection points at this midpoint
-                rp = np.nonzero(R[cmpx,:])[1][:40]
-                print rp
+                rp = np.nonzero(R[cmpx,:])[0]
                 #and iterates over them
-                             
-                #~ for cmpz in ():
-                        #~ ds = np.sqrt(cmpz**2 + (h)**2)/float(numpoints) # line step distance
-                        #~ #predefine outputs
-                        #~ amp = 1.0
-                        #~ time = 0.0
+                for cmpz in (rp):
+                        #~ print cmpx, cmpz
+                        ds = np.sqrt(cmpz**2 + (h)**2)/float(numpoints) # line step distance
+                        #predefine outputs
+                        amp = 1.0
+                        time = 0.0
 
-                        #~ #traveltime from source to cdp
-                        #~ vp_down = toolbox.find_points(sx, sz, cmpx, cmpz, numpoints, vp)
-                        #~ time += np.sum(ds/vp_down)
+                        #traveltime from source to cdp
+                        vp_down = toolbox.find_points(sx, sz, cmpx, cmpz, numpoints, vp)
+                        time += np.sum(ds/vp_down)
 
-                        #~ #traveltime from cdp to geophone
-                        #~ vp_up = toolbox.find_points(cmpx, cmpz, gx-1, gz, numpoints, vp)
-                        #~ time += np.sum(ds/vp_up)
+                        #traveltime from cdp to geophone
+                        vp_up = toolbox.find_points(cmpx, cmpz, g, gz, numpoints, vp)
+                        time += np.sum(ds/vp_up)
 
-                        #~ #loss due to spherical divergence
-                        #~ amp *= diverge(ds*numpoints, 3)#two way
+                        #loss due to spherical divergence
+                        amp *= diverge(ds*numpoints, 3)#two way
 
                         #transmission losses from source to cdp
-                        #~ rho_down = toolbox.find_points(sx, sz, cmpx, cmpz, numpoints, rho)
-                        #~ z0s = rho_down * vp_down
-                        #~ z1s = toolbox.roll(z0s, 1)
-                        #~ correction = np.cumprod(transmission_coefficient(z0s, z1s) )[-1] 
-                        #~ amp *= correction
+                        rho_down = toolbox.find_points(sx, sz, cmpx, cmpz, numpoints, rho)
+                        z0s = rho_down * vp_down
+                        z1s = toolbox.roll(z0s, 1)
+                        correction = np.cumprod(transmission_coefficient(z0s, z1s) )[-1] 
+                        amp *= correction
 
-                        #~ #amplitude loss at reflection point
-                        #~ correction = R[cmpx,cmpz]
-                        #~ amp *= correction
-                        #~ #transmission loss from cdp to source
-                        #~ rho_up = toolbox.find_points(cmpx, cmpz, gx-1, gz, numpoints, rho)
-                        #~ z0s = rho_up * vp_up
-                        #~ z1s = toolbox.roll(z0s, 1)
-                        #~ correction = np.cumprod(transmission_coefficient(z0s, z1s))[-1]
-                        #~ amp *= correction
+                        #amplitude loss at reflection point
+                        correction = R[cmpx,cmpz]
+                        amp *= correction
+                        #transmission loss from cdp to source
+                        rho_up = toolbox.find_points(cmpx, cmpz, g, gz, numpoints, rho)
+                        z0s = rho_up * vp_up
+                        z1s = toolbox.roll(z0s, 1)
+                        correction = np.cumprod(transmission_coefficient(z0s, z1s))[-1]
+                        amp *= correction
 
-                        #~ x = np.floor(gx).astype(np.int) -1
-                        #~ t = np.floor(time*1000).astype(np.int)
+                        x = np.floor(g).astype(np.int) -1
+                        t = np.floor(time*1000).astype(np.int)
 
-                        #~ dataset['trace'][x, t] += amp
-        #~ return dataset
+                        dataset[x, t] += amp
+        return dataset
 
 
         
 if __name__ == '__main__':
         workspace, params = initialise()
         
-        build_reflector(workspace, 'reflector.su', **params)
-        #~ tmp = toolbox.agc('reflector.su', None, **param)
-        #~ toolbox.display(tmp, None, **param)
+        build_reflector(workspace, None, **params)
+        toolbox.agc(workspace, None, **params)
+        toolbox.display(workspace, None, **params)
 
                 
 
