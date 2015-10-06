@@ -18,6 +18,7 @@ from exersize2 import diverge, build_direct
 #-----------------------------------------------------------------------
 
 def refract(x, v0, v1, z0):
+        '''calculates refracted wave traveltime'''
         ic = np.arcsin(v0/v1)
         t0 = 2.0*z0*np.cos(ic)/v0
         t = t0 + x/v1
@@ -33,13 +34,16 @@ def build_refractor(dataset, **kwargs):
         builds refractor
         '''
         
+        #extract the base of weathering from the model
         R =  kwargs['model']['R']
         x = np.where(R != 0)[0][::4]
         z0 = np.where(R != 0)[1][::4]
         
+        #extract v0 and v1
         v1 = kwargs['model']['vp'][x, z0]
         v0 = kwargs['model']['vp'][x, z0-1]
         
+        #calculate refraction travel times
         refraction_times = refract(kwargs['aoffsets'], v0, v1, z0)
 
         #create amplitude array
@@ -63,17 +67,20 @@ def build_refractor(dataset, **kwargs):
         x = np.floor(x).astype(np.int)
         t *= 1000 # milliseconds
         t = np.floor(t).astype(np.int)
-
+        
+        #write values to array
         dataset[x, t] += refract_amps
         return dataset
 
 
         
 if __name__ == '__main__':
+        #initialise
         workspace, params = initialise()
         
-        build_direct(workspace, None, **params)
+        #build refractor
         build_refractor(workspace, None, **params)
+        #display
         tmp = toolbox.agc(workspace, None, **params)
         toolbox.display(tmp, None, **params)
 

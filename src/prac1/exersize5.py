@@ -31,15 +31,18 @@ def convolve_wavelet(dataset, **kwargs):
         return dataset
 
 if __name__ == '__main__':
+        #initialise
         workspace, params = initialise()
         
-
         #build record
         build_combined(workspace, None, **params)
         
-        #build wavelet
+        #add wavelet
         workspace = convolve_wavelet(workspace, None, **params)
-        workspace = add_noise(workspace, None, **params)
-        toolbox.agc(workspace, None, **params)
         
+        #add noise
+        workspace = add_noise(workspace, None, **params)
+        
+        #display
+        toolbox.agc(workspace, None, **params)
         toolbox.display(workspace, None, **params)

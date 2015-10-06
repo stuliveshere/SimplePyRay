@@ -18,10 +18,12 @@ from exersize2 import diverge
 #-----------------------------------------------------------------------
 
 def reflection_coefficient(z0, z1):
+    '''calculate zero-offset reflection coefficient'''
     z = ((z1 - z0))/(z1+z0)
     return z
 
 def transmission_coefficient(z0, z1):
+    '''calculate zero-offset transmission coefficient'''
     r = (2.0*z0)/((z1+z0))
     return r
 
@@ -86,18 +88,23 @@ def build_reflector(dataset, **kwargs):
                         correction = np.cumprod(transmission_coefficient(z0s, z1s))[-1]
                         amp *= correction
 
+                        #calculate coordinates
                         x = np.floor(g).astype(np.int) -1
                         t = np.floor(time*1000).astype(np.int)
-
+                        
+                        #write out data
                         dataset[x, t] += amp
         return dataset
 
 
         
 if __name__ == '__main__':
+        #initialise
         workspace, params = initialise()
         
+        #build reflector
         build_reflector(workspace, None, **params)
+        #display
         toolbox.agc(workspace, None, **params)
         toolbox.display(workspace, None, **params)
 

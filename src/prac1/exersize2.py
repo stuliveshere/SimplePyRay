@@ -20,6 +20,7 @@ def diverge(distance, coefficient=3.0):
         return r
         
 def direct(distance, velocity):
+        '''calculates the direct ray travel time'''
         time = distance/velocity
         return time
 
@@ -35,8 +36,11 @@ def build_direct(dataset, **kwargs):
         imposes it upon an array. assumes 330 m/s
         surface velocity
         '''
-
+        
+        #speed of the direct wave
         directv = 330.0 #m/s
+        
+        #calculate direct travel times
         direct_times = direct(kwargs['aoffsets'], directv)
         
         #set base amplitude (from testing)
@@ -66,10 +70,13 @@ def build_direct(dataset, **kwargs):
 
         
 if __name__ == '__main__':
+        #initialise
         workspace, params = initialise()
         
         #lets set up for calculating direct wave
         build_direct(workspace, None, **params)
+        
+        #and display
         toolbox.agc(workspace, None, **params)
         toolbox.display(workspace, None, **params)
 

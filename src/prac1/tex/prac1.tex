@@ -51,9 +51,12 @@
 \begin{document}
 
 \maketitle % Insert the title, author and date
-This is the first of two pracs on seismic data processing.  This prac is dedicated to building a synthetic 2D seismic dataset. The primary motivation for building a synthetic dataset for processing is to ensure we know what the answer is before we start, and thus can assess the effectiveness of our data processing.  
+This is the first of three pracs on seismic data processing.  This prac is dedicated to building a synthetic 2D seismic dataset. The primary motivation for building a synthetic dataset for processing is to ensure we know what the answer is before we start, and thus can assess the effectiveness of our data processing.  
 \par~\\
-The second prac will involve processing the dataset created in this prac.
+The second prac will involve building the tools needed to process a seismic dataset.  We will test these tools on the models generated today.
+\par~\\
+The third prac will use these tools to process a real seismic dataset.
+
 \section{Introduction}
 
 The core concept used to create this synthetic model is known as the convolutional model. The convolutional model states that a recorded signal is the convolution of a source wavelet with the earth's response, convolved with the recorder response, plus some additional noise, i.e.
@@ -196,15 +199,16 @@ This exercise will include the following steps:
 \item *Add noise
 \item *Display result
 \end{enumerate}
-\section*{Exercise 6: Build Complete Survey}
+\section*{Exercise 6: Exploring Advanced Modelling Techinques}
 
-Using the tools created in exercises 1 to 5, build a complete synthetic seismic survey
+This exercise examines alternative modelling techniques, including finite difference modelling and bent-ray ray-tracing.
+
 \newpage
 \lstinputlisting{../exersize1.py}
 \lstinputlisting{../exersize2.py}
 \lstinputlisting{../exersize3.py}
 \lstinputlisting{../exersize4.py}
 \lstinputlisting{../exersize5.py}
-\lstinputlisting{../exersize6.py}
+%\lstinputlisting{../exersize6.py}
 
 \end{document}

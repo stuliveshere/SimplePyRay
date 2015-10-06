@@ -10,7 +10,7 @@ def run_model(dataset, **kwargs):
         #calculate courant's number, do stability check, adjust dt if neccessary
         kwargs['dt'], kwargs['C'] = toolbox.stability_check(kwargs['model']['vp'], kwargs['dt'], min(kwargs['dx'], kwargs['dz']))
         #calculate source wavelet
-        kwargs['source'] = toolbox.ricker_roll(50, params['nsteps']*kwargs['dt'], kwargs['dt'] )  
+        kwargs['source'] = toolbox.ricker_roll(200, params['nsteps']*kwargs['dt'], kwargs['dt'] )  
         
         #plotting stuff
         fig, ax = pylab.subplots(1,1,figsize=(8,8))
@@ -45,8 +45,8 @@ def run_model(dataset, **kwargs):
 
 
 if __name__ == "__main__":
-        workspace, params = initialise()
-
+        workspace, params = initialise(filename="model2.png")
+        params['sz'] = 100
         #setup some modelling parameters
         params['dt'] = 1e-4
         params['nsteps'] = 1000

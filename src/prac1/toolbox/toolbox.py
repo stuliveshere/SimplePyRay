@@ -82,11 +82,11 @@ class build_model(dict):
         divide true value by 100
         i.e. vp = 1000m/s becomes r=10        
         '''
-        def __init__(self,*arg,**kw):
+        def __init__(self, filename="model.png", *arg,**kw):
                 super(build_model, self).__init__(*arg, **kw)
 
                 #import model and rescale values
-                im = np.floor(image.imread("model.png")*25500).T
+                im = np.floor(image.imread(filename)*25500).T
                 
                 #build model dictionary
                 self['vp'] = im[0,:,:]
@@ -97,12 +97,16 @@ class build_model(dict):
                 z = self['z'] =  self['vp'] * self['rho']
                 self['nx'], self['nz'] = z.shape
                 
+                try:
                 #calculte local refleciton coefficients
-                z1 =  np.roll(z, shift=1)
-                z2 =  z.copy()              
-                self['R'] = (z2 - z1)/(z2 + z1)
-                self['R'][:,-1] *= 0
-                self['R'][:,0] *= 0
+                        z1 =  np.roll(z, shift=1)
+                        z2 =  z.copy()              
+                        self['R'] = (z2 - z1)/(z2 + z1)
+                        self['R'][:,-1] *= 0
+                        self['R'][:,0] *= 0
+                except FloatingPointError:
+                        print "warning - this model only has p-wave velocities"
+                
                 
                 
         def display(self):
