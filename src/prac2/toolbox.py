@@ -11,199 +11,144 @@ from matplotlib.widgets import Slider
 
 
 def io(func):
-	'''
-	an io decorator that allows
-	input/output to be either a filename 
-	(i.e. a string) or an array
-	'''
-	def wrapped(*args, **kwargs) :
-		if type(args[0]) == type(''):
-			workspace = read(args[0])
-		else:
-			workspace = args[0]
-		result = func(workspace, **kwargs)
-		if type(result) != type(None):
-			if type(args[1]) == type(''):
-				return write(result, args[1])
-			else:
-				return result
-	return wrapped
+        '''
+        an io decorator that allows
+        input/output to be either a filename 
+        (i.e. a string) or an array
+        '''
+        def wrapped(*args, **kwargs) :
+                if type(args[0]) == type(''):
+                        workspace = read(args[0])
+                else:
+                        workspace = args[0]
+                result = func(workspace, **kwargs)
+                if type(result) != type(None):
+                        if type(args[1]) == type(''):
+                                return write(result, args[1])
+                        else:
+                                return result
+        return wrapped
 
 #==================================================
 #                                 display tools
 #==================================================
 
-@io	
-def display(workspace, **params):
-	'''displays a gather using imshow'''
-	global clip
-	def key_event(e):
-		global clip
-		if e.key == "right":
-			clip *= 1.1
-		elif e.key == "left":
-			clip /= 1.1
-		else:
-			return
-			
-		fig.clf()
-		ax = fig.add_subplot(111)
-		im = ax.imshow(workspace['trace'].T, aspect='auto', cmap='Greys', vmax =clip, vmin=-1*clip)
-		fig.colorbar(im)
-		fig.canvas.draw()
-	
-	if 'clip' in params:
-		clip = params['clip']
-	else:
-		clip = np.amax(np.abs(workspace['trace']))
-	fig = pylab.figure()
-	ax = fig.add_subplot(111)
-	fig.canvas.mpl_connect('key_press_event', key_event)
-	im = ax.imshow(workspace['trace'].T, aspect='auto', cmap='Greys', vmax =clip, vmin=-1*clip)
-	fig.colorbar(im)
 
-	
-start = 0
-clip = 0
-@io	
-def scroll(dataset, **kwargs):
-	'''
-	iterates through dataset using
-	left and right keys
-	parameters required:
-		primary key
-		seconary key
-		step size
-	'''
-	dataset = np.sort(dataset, order=(kwargs['primary'], kwargs['secondary']))
-	keys = np.unique(dataset[kwargs['primary']])
-	keys = keys[::kwargs['step']]
-	nkeys = keys.size
-	
-	
-	def key_event(e):
-		global start
-		if e.key == "right":
-			start = start + 1
-		elif e.key == "left":
-			start = start - 1
-		else:
-			return
-			
-		slice =  dataset[dataset[kwargs['primary']] == keys[start]]
-		agc(slice, None, None)
-		ax.cla()
-		im = ax.imshow(slice['trace'].T, aspect='auto', cmap='Greys')
-		ax.set_title('%s = %d' %(kwargs['primary'], keys[start]))
-		fig.canvas.draw()
-	
-	slice =  dataset[dataset[kwargs['primary']] == keys[start]]
-	agc(slice, None, None)
+class KeyHandler(object):
+        def __init__(self, fig, ax, dataset, kwargs):
+                self.fig = fig
+                self.ax = ax
+                self.kwargs = kwargs
+                self.dataset = dataset 
+                keys = np.unique(dataset[kwargs['primary']])
+                self.keys = keys[::kwargs['step']]
+                self.nkeys = self.keys.size
+                self.start = 0
+                self.ensemble()
+                
+                if 'clip' in kwargs and kwargs['clip'] != 0:
+                        self.clip = kwargs['clip']
+                else:
+                        self.clip = np.mean(np.abs(self.dataset['trace']))
+                        
+                print 'PySeis Seismic Viewer'
+                print 'type "h" for help'
+                self.draw()
+                
+        def __call__(self, e):
+                if e.key == "right":
+                        self.start += 1
+                        self.ensemble()
+                elif e.key == "left":
+                        self.start -= 1
+                        self.ensemble()
+                elif e.key == "up":
+                        self.clip /= 1.1
+                        print self.clip
+                elif e.key == "down":
+                        self.clip *= 1.1
+                        print self.clip
+                elif e.key == "h":
+                        print "right arrow: next gather"
+                        print "left arrow: last gather"
+                        print "up arrow: hotter"
+                        print "down arrow: colder"
+                        print "clip=", self.clip
+                        
+                else:
+                        return
+                self.draw()
+                      
+                
+        def draw(self):
+                self.ax.cla()
+                self.im = self.ax.imshow(self.slice['trace'].T, aspect='auto', cmap='Greys', vmax =self.clip, vmin=-1*self.clip)
+                self.ax.set_title('%s = %d' %(self.kwargs['primary'], self.keys[self.start]))
+                self.fig.canvas.draw()      
 
-	fig = pylab.figure()
-	ax = fig.add_subplot(111)
-	fig.canvas.mpl_connect('key_press_event', key_event)
-	im = ax.imshow(slice['trace'].T, aspect='auto', cmap='Greys')
-	ax.set_title('%s = %d' %(kwargs['primary'], keys[start]))
-	
+        def ensemble(self):
+                try:
+                        self.slice = self.dataset[self.dataset[self.kwargs['primary']] == self.keys[self.start]]
+                except IndexError:
+                        self.start = 0
+
+
+@io	
+def display(dataset, **kwargs):
+        '''
+        iterates through dataset using
+        left and right keys
+        parameters required:
+                primary key
+                seconary key
+                step size
+        '''
+        fig = pylab.figure()
+        ax = fig.add_subplot(111)
+        eventManager =  KeyHandler(fig, ax, dataset, kwargs)
+        fig.canvas.mpl_connect('key_press_event',eventManager)
+
+        
 def scan(dataset):
-	print "    %0-35s: %0-15s   %s" %('key', 'min', 'max')
-	print "========================================="
-	for key in np.result_type(dataset).descr:
-		a = np.amin(dataset[key[0]])
-		b = np.amax(dataset[key[0]])
-		if (a != 0) and (b != 0):
-			print "%0-35s %0-15.3f  %.3f" %(key, a, b)
-	print "========================================="	
-		
+        print "    %0-35s: %0-15s   %s" %('key', 'min', 'max')
+        print "========================================="
+        for key in np.result_type(dataset).descr:
+                a = np.amin(dataset[key[0]])
+                b = np.amax(dataset[key[0]])
+                if (a != 0) and (b != 0):
+                        print "%0-35s %0-15.3f  %.3f" %(key, a, b)
+        print "========================================="	
+                
 
 def build_vels(times, velocities, ns=1000, dt=0.001):
-	'''builds a full velocity trace from a list of vels and times'''
-	tx = np.linspace(dt, dt*ns, ns)
-	vels = np.interp(tx, times, velocities)
-	vels = np.pad(vels, (100,100), 'reflect')
-	vels = np.convolve(np.ones(100.0)/100.0, vels, mode='same')
-	vels = vels[100:-100]
-	return vels
-	
-class build_model(dict):
-	def __init__(self,*arg,**kw):
-		super(build_model, self).__init__(*arg, **kw)
-		self['nlayers'] = 5
-		self['nx'] = 500
-		fault_throw = 20
-		
-		self['dz'] = np.array([40, 80, 40, 200, 400, ])
-		self['vp'] = np.array([800., 2200., 1800., 2400., 4500., ])
-		self['vs'] = self['vp']/2.
-		self['rho'] = np.array([1500., 2500., 1400., 2700., 4500., ])
-		self['depths'] = np.cumsum(self['dz'])
-		
-		self['model'] = {}
-		for model in ['vp', 'vs', 'rho']:
-			layer_list = []
-			for index in range(self['nlayers']):
-				layer = np.ones((self['nx'], self['dz'][index]), 'f')
-				layer *= self[model][index]
-				layer_list.append(layer)
-			self['model'][model] = np.hstack(layer_list)
-			self['model'][model][250:500,120:160] = self[model][1]
-			self['model'][model][250:500,120+fault_throw:160+fault_throw] = self[model][2]
-		
-		self['model']['z'] = self['model']['vp'] * self['model']['rho']
-		self['model']['R'] = (np.roll(self['model']['z'], shift=-1) - self['model']['z'])/(np.roll(self['model']['z'], shift=-1) + self['model']['z'])
-		self['model']['R'][:,0] *= 0
-		self['model']['R'][:,-1:] *= 0
-		self['model']['R'][:,:self['dz'][0]+2] = 0
-		
-		
-	#def __repr__(self):
-		#return repr(self['model'])
-			
-	def display(self):
-		for m in self['model'].keys():
-			pylab.figure()
-			pylab.imshow(self['model'][m].T)
-			pylab.colorbar()
-			pylab.xlabel('m')
-			pylab.ylabel('m')
-			pylab.title(m)
-		pylab.show()
-		
-def find_points(x0, z0, x1, z1, nump, model):
-	'''
-	nearest neighbour search
-	'''
-	
-	x = np.linspace(x0, x1, nump, endpoint=False)
-	z = np.linspace(z0, z1, nump, endpoint=False) #generate rays
-	xint = np.ceil(x) #round em down
-	zint = np.ceil(z) #round em down
-	return model[xint.astype(np.int), zint.astype(np.int)] 
-	
-def roll(input, shift):
-	input = np.pad(input, shift, mode='reflect') #pad to get rid of edge effect
-	output = np.roll(input, shift=shift) #shift the values by 1
-	return output[shift:-1*shift]
-	
+        '''builds a full velocity trace from a list of vels and times'''
+        tx = np.linspace(dt, dt*ns, ns)
+        vels = np.interp(tx, times, velocities)
+        vels = np.pad(vels, (100,100), 'reflect')
+        vels = np.convolve(np.ones(100.0)/100.0, vels, mode='same')
+        vels = vels[100:-100]
+        return vels
+        
+                
+       
 @io
 def cp(workspace, **params):
-	return workspace
+        return workspace
 
 @io
 def agc(workspace, window=100, **params):
-	'''
-	automatic gain control
-	inputs:
-	window
-	'''
-	vec = np.ones(window, 'f')
-	func = np.apply_along_axis(lambda m: np.convolve(np.abs(m), vec, mode='same'), axis=-1, arr=workspace['trace'])
-	workspace['trace'] /= func
-	workspace['trace'][~np.isfinite(workspace['trace'])] = 0
-	workspace['trace'] /= np.amax(np.abs(workspace['trace']))
-	return workspace
-	
+        '''
+        automatic gain control
+        inputs:
+        window
+        '''
+        vec = np.ones(window, 'f')
+        func = np.apply_along_axis(lambda m: np.convolve(np.abs(m), vec, mode='same'), axis=-1, arr=workspace['trace'])
+        workspace['trace'] /= func
+        workspace['trace'][~np.isfinite(workspace['trace'])] = 0
+        workspace['trace'] /= np.amax(np.abs(workspace['trace']))
+        return workspace
+        
 def ricker(f, length=0.512, dt=0.001):
     t = np.linspace(-length/2, (length-dt)/2, length/dt)
     y = (1.0 - 2.0*(np.pi**2)*(f**2)*(t**2)) * np.exp(-(np.pi**2)*(f**2)*(t**2))
@@ -213,9 +158,9 @@ def ricker(f, length=0.512, dt=0.001):
  
  
 def conv(workspace, wavelet):
-	workspace['trace'] = np.apply_along_axis(lambda m: np.convolve(m, wavelet, mode='same'), axis=-1, arr=workspace['trace'])
-	return workspace
-	
+        workspace['trace'] = np.apply_along_axis(lambda m: np.convolve(m, wavelet, mode='same'), axis=-1, arr=workspace['trace'])
+        return workspace
+        
 import numpy as np
 su_header_dtype = np.dtype([
 ('tracl', np.int32),
@@ -313,33 +258,33 @@ su_header_dtype = np.dtype([
 
 
 def typeSU(ns):
-	return np.dtype(su_header_dtype.descr + [('trace', ('<f4',ns))])
-	
-		
+        return np.dtype(su_header_dtype.descr + [('trace', ('<f4',ns))])
+        
+                
 def readSUheader(filename):
-	raw = open(filename, 'rb').read()
-	return np.fromstring(raw, dtype=su_header_dtype, count=1)
+        raw = open(filename, 'rb').read()
+        return np.fromstring(raw, dtype=su_header_dtype, count=1)
 
 def read(filename=None):
-	if filename == None:
-		raw= sys.stdin.read()
-	else:
-		raw = open(filename, 'rb').read()
-	return readData(raw)
-	
+        if filename == None:
+                raw= sys.stdin.read()
+        else:
+                raw = open(filename, 'rb').read()
+        return readData(raw)
+        
 def readData(raw):
-	su_header = np.fromstring(raw, dtype=su_header_dtype, count=1)
-	ns = su_header['ns'][0]
-	file_dtype = typeSU(ns)
-	data = np.fromstring(raw, dtype=file_dtype)
-	return data	
-	
+        su_header = np.fromstring(raw, dtype=su_header_dtype, count=1)
+        ns = su_header['ns'][0]
+        file_dtype = typeSU(ns)
+        data = np.fromstring(raw, dtype=file_dtype)
+        return data	
+        
 def write(data, filename=None):
-	if filename == None:
-		data.tofile(sys.stdout)
-	else:
-		data.tofile(filename)
-		
+        if filename == None:
+                data.tofile(sys.stdout)
+        else:
+                data.tofile(filename)
+                
 
 
 
