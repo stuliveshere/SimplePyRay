@@ -40,11 +40,14 @@ class KeyHandler(object):
                 self.ax = ax
                 self.kwargs = kwargs
                 self.dataset = dataset 
-                keys = np.unique(dataset[kwargs['primary']])
-                self.keys = keys[::kwargs['step']]
-                self.nkeys = self.keys.size
                 self.start = 0
-                self.ensemble()
+                if kwargs['primary'] == None:
+                        self.slice = self.dataset
+                else:
+                        keys = np.unique(dataset[kwargs['primary']])
+                        self.keys = keys[::kwargs['step']]
+                        self.nkeys = self.keys.size
+                        self.ensemble()
                 
                 if 'clip' in kwargs and kwargs['clip'] != 0:
                         self.clip = kwargs['clip']
@@ -83,7 +86,10 @@ class KeyHandler(object):
         def draw(self):
                 self.ax.cla()
                 self.im = self.ax.imshow(self.slice['trace'].T, aspect='auto', cmap='Greys', vmax =self.clip, vmin=-1*self.clip)
-                self.ax.set_title('%s = %d' %(self.kwargs['primary'], self.keys[self.start]))
+                try:
+                        self.ax.set_title('%s = %d' %(self.kwargs['primary'], self.keys[self.start]))
+                except AttributeError:
+                        pass
                 self.fig.canvas.draw()      
 
         def ensemble(self):

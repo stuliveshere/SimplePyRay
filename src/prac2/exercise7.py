@@ -36,15 +36,17 @@ def lmo(dataset, **kwargs):
 #-----------------------------------------------------------------------
 
 if __name__ == "__main__":
-        workspace, params = initialise('cdp201.su')
-
-        params['lmo'] =2200.0
+        workspace, params = initialise('cdp500.su')
+        params['primary'] = 'cdp'
+        params['secondary'] = 'offset'
+        params['lmo'] =1000.0
         toolbox.agc(workspace, None, None)
         lmo(workspace, None, **params)
-        workspace['trace'][:,80:110].fill(0)
-        params['lmo'] =-2000.0
+        workspace['trace'][:,:30] *= 0
+        workspace['trace'][:,1850:] *= 0
+        params['lmo'] =-1000.0
         lmo(workspace, None, **params)
         
-        toolbox.display(workspace, None, None)
+        toolbox.display(workspace, None, **params)
         pylab.show()
 

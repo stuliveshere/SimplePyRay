@@ -24,34 +24,38 @@ None
 
 if __name__ == "__main__":
         #intialise workspace and parameter dictionary
-        workspace, params = initialise('survey.su')
+        print 'initialising'
+        workspace, params = initialise('cleaned.su')
         
-        #~ #set our TAR
-        #~ params['gamma'] = 10
-        #~ tar(workspace, None, **params)
+        
+        #set our TAR
+        print "applying tar"
+        params['gamma'] = 3
+        tar(workspace, None, **params)
         
        
-        #~ #apply LMO
-        #~ params['lmo'] =2200.0
-        #~ lmo(workspace, None, **params)
-        #~ workspace['trace'][:,80:110] *= 0
-        #~ params['lmo'] = -2200.0
-        #~ lmo(workspace, None, **params)
+        #apply LMO
+        params['lmo'] =1000.0
+        lmo(workspace, None, **params)
+        workspace['trace'][:,:30] *= 0
+        workspace['trace'][:,1850:] *= 0
+        params['lmo'] = -1000.0
+        lmo(workspace, None, **params)
         
-        #~ #apply our NMO
-        #~ params['smute'] = 100.0
-        #~ v = [1417, 1510,1878]
-        #~ t = [0.171, 0.215, 0.381]
-        #~ params['vels'] = toolbox.build_vels(t, v)
-        #~ nmo(workspace, None, **params)
+        #apply our NMO
+        params['smute'] = 30
+        v = [1000, 1510,3000]
+        t = [0.214, 1.03, 1.71]
+        params['vels'] = toolbox.build_vels(t, v, ns=params['ns'])
+        nmo(workspace, None, **params)
         
         #~ #apply AGC
-        #~ toolbox.agc(workspace, None, **params)
-        
+        toolbox.agc(workspace, None, **params)
         #~ #stack
-        #~ stack(workspace, 'stack1.su', **params)
+        stack(workspace, 'stack1.su', **params)
         
         #view
+        params['primary'] = None
         toolbox.display('stack1.su', None, **params)
         
         pylab.show()
