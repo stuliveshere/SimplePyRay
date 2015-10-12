@@ -26,7 +26,8 @@ if __name__ == "__main__":
         #intialise workspace and parameter dictionary
         print 'initialising'
         workspace, params = initialise('cleaned.su')
-        
+
+  
         
         #set our TAR
         print "applying tar"
@@ -35,6 +36,7 @@ if __name__ == "__main__":
         
        
         #apply LMO
+        print "applying lmo"
         params['lmo'] =1000.0
         lmo(workspace, None, **params)
         workspace['trace'][:,:30] *= 0
@@ -43,6 +45,7 @@ if __name__ == "__main__":
         lmo(workspace, None, **params)
         
         #apply our NMO
+        print "applying nmo"
         params['smute'] = 30
         v = [1000, 1510,3000]
         t = [0.214, 1.03, 1.71]
@@ -52,6 +55,7 @@ if __name__ == "__main__":
         #~ #apply AGC
         toolbox.agc(workspace, None, **params)
         #~ #stack
+        print "stacking"
         stack(workspace, 'stack1.su', **params)
         
         #view

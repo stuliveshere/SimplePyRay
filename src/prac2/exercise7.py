@@ -16,19 +16,13 @@ def _lmo_calc(aoffset, velocity):
         
 @io
 def lmo(dataset, **kwargs):
-        for index, trace in enumerate(dataset):
-                aoffset = np.abs(trace['offset']).astype(np.float)
-                ns = trace['ns']
-                dt = trace['dt'] * 1e-6
-                tx = np.linspace(dt, dt*ns, ns)
-                #calculate time shift
+        offsets = np.unique(dataset['offset'])
+        for offset in offsets:
+                aoffset = np.abs(offset)
                 shift = _lmo_calc(aoffset, kwargs['lmo'])
-                #turn into samples
                 shift  = (shift*1000).astype(np.int)
-                #roll
-                result = np.roll(trace['trace'], shift)
-                dataset[index]['trace'] *= 0
-                dataset[index]['trace'] += result
+                inds= [dataset['offset'] == offset]
+                dataset['trace'][inds] =  np.roll(dataset['trace'][inds], shift, axis=-1) #results[inds]
         return dataset
 
 #-----------------------------------------------------------------------
@@ -40,7 +34,7 @@ if __name__ == "__main__":
         params['primary'] = 'cdp'
         params['secondary'] = 'offset'
         params['lmo'] =1000.0
-        toolbox.agc(workspace, None, None)
+        toolbox.agc(workspace, None, **params)
         lmo(workspace, None, **params)
         workspace['trace'][:,:30] *= 0
         workspace['trace'][:,1850:] *= 0
