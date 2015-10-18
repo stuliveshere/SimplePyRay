@@ -27,7 +27,7 @@ def initialise(file):
         dt = kwargs['dt'] = dataset['dt'][0]/1e6
                        
         #also add the time vector - it's useful later
-        kwargs['times'] = np.linspace(dt, ns*dt, ns*dt*1000)
+        kwargs['times'] = np.arange(0, dt*ns, dt)
         
         dataset['trace'] /= np.amax(dataset['trace'])
         kwargs['primary'] = 'sx'
