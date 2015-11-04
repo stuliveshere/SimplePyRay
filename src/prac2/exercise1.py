@@ -7,8 +7,6 @@ import toolbox
 import numpy as np
 import os
 import matplotlib.pyplot as pylab
-import pprint
-
 
 #-----------------------------------------------------------------------
 #              useful functions
@@ -22,7 +20,6 @@ def initialise(file):
         dataset = toolbox.read(file)
         
         #allocate stuff
-        #~ 
         ns = kwargs['ns'] = dataset['ns'][0]
         dt = kwargs['dt'] = dataset['dt'][0]/1e6
                        

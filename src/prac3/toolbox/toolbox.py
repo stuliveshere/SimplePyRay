@@ -59,6 +59,7 @@ class KeyHandler(object):
                 self.draw()
                 
         def __call__(self, e):
+                print e.xdata, e.ydata
                 if e.key == "right":
                         self.start += 1
                         self.ensemble()
@@ -126,14 +127,14 @@ def scan(dataset):
         print "========================================="	
                 
 
-def build_vels(times, velocities, ns=1000, dt=0.001):
-        '''builds a full velocity trace from a list of vels and times'''
-        tx = np.linspace(dt, dt*ns, ns)
-        vels = np.interp(tx, times, velocities)
-        vels = np.pad(vels, (100,100), 'reflect')
-        vels = np.convolve(np.ones(100.0)/100.0, vels, mode='same')
-        vels = vels[100:-100]
-        return vels
+#~ def build_vels(times, velocities, ns=1000, dt=0.001):
+        #~ '''builds a full velocity trace from a list of vels and times'''
+        #~ tx = np.linspace(dt, dt*ns, ns)
+        #~ vels = np.interp(tx, times, velocities)
+        #~ vels = np.pad(vels, (100,100), 'reflect')
+        #~ vels = np.convolve(np.ones(100.0)/100.0, vels, mode='same')
+        #~ vels = vels[100:-100]
+        #~ return vels
         
                 
        
@@ -166,6 +167,27 @@ def ricker(f, length=0.512, dt=0.001):
 def conv(workspace, wavelet):
         workspace['trace'] = np.apply_along_axis(lambda m: np.convolve(m, wavelet, mode='same'), axis=-1, arr=workspace['trace'])
         return workspace
+@io
+def fx(workspace, **params):
+        f = np.abs(np.fft.rfft(workspace['trace'], axis=-1))
+        correction = np.mean(np.abs(f), axis=-1).reshape(-1,1)
+        f /= correction
+        f = 20.0*np.log10(f)[:,::-1]
+        
+        freq = np.fft.rfftfreq(params['ns'], params['dt'])
+        print params['ns'], params['dt']
+        
+        hmin = np.amin(workspace['cdp'])
+        hmax = np.amax(workspace['cdp'])
+        vmin = np.amin(freq)
+        vmax = np.amax(freq)
+        extent=[hmin,hmax,vmin,vmax]
+        pylab.imshow(f.T, aspect='auto', extent=extent)
+
+
+def db(data):
+        return 20.0*np.log10(data)
+
         
 import numpy as np
 su_header_dtype = np.dtype([
